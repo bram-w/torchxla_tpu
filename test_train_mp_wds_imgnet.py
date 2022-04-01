@@ -31,18 +31,77 @@ import schedulers
 import args_parse 
 
 
+def get_dct_mat(N):
+    idx = torch.arange(N, dtype=torch.float)
+    # NOTE: Have i/j as rows which means it's second term in outer
+    base_mat = ( (torch.pi / N) * torch.outer(idx, idx+0.5)).cos()
+
+    # Need to add batch/channels and then reduce
+    i_mat = torch.nn.functional.interpolate(base_mat[None, None], N**2).squeeze()
+    j_mat = base_mat.tile(N, N)
+    full_mat = i_mat * j_mat
+    return full_mat
+
+class Conv1dDCT(torch.nn.Conv1d):
+    """
+    Implement DCT as Conv1d
+    """
+    def __init__(self, in_spatial, num_color_channels=1):
+        self.N = in_spatial
+        self.num_color_channels = num_color_channels
+        self.total_dim = (in_spatial**2) * num_color_channels
+        super(Conv1dDCT, self).__init__(self.total_dim, self.total_dim, 1, 1, bias=False)
+        # print(get_dct_mat(self.N).shape)
+        # print(len([get_dct_mat(self.N) for _ in range(self.num_color_channels)]))
+        self.weight.data = torch.block_diag(*[get_dct_mat(self.N) for _ in range(self.num_color_channels)])[:, :, None]
+        # print(self.weight.data.shape)
+        self.weight.requires_grad = False # don't learn this!
+
+    def reset_parameters(self):
+        # initialise using dct function
+        self.weight.data = torch.block_diag(*[get_dct_mat(self.N) for _ in range(self.num_color_channels)])[:, :, None]
+        self.weight.requires_grad = False # don't learn this!
+        
+class IdentityPatchEmbed(torch.nn.Conv2d):
+    def __init__(self, patch_size, in_channels):
+        self.in_channels = in_channels
+        self.patch_size = patch_size
+        self.out_channels = in_channels * (patch_size**2)
+        super(IdentityPatchEmbed, self).__init__(self.in_channels,
+                                                 out_channels=self.out_channels,
+                                                 kernel_size=(patch_size, patch_size),
+                                                 stride=patch_size,
+                                                 bias=False)
+        self.weight.data = torch.eye(in_channels * (patch_size**2)).view(self.weight.shape)
+        self.weight.requires_grad = False 
+
+    def reset_parameters(self):
+        # initialise using dct function
+        self.weight.data = torch.eye(self.in_channels * (self.patch_size**2)).view(self.weight.shape)
+        self.weight.requires_grad = False # don't learn this!
+
+class PatchDCT(torch.nn.Sequential):
+    def __init__(self, patch_size, in_channels):
+        super(torch.nn.Sequential, self).__init__()
+        self.append(IdentityPatchEmbed(patch_size, in_channels))
+        self.append(torch.nn.Flatten(start_dim=2))
+        self.append(Conv1dDCT(patch_size, in_channels))
+        self.append(torch.nn.Conv1d(in_channels * (patch_size**2), 768, 1, 1))
+
+
 SUPPORTED_MODELS = [
     'alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
     'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34',
     'resnet50', 'squeezenet1_0', 'squeezenet1_1', 'vgg11', 'vgg11_bn', 'vgg13',
-    'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn'
+    'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn',
+    'vit_b_16', 'vit_b_16_freq'
 ]
 
 
 MODEL_OPTS = {
     '--model': {
         'choices': SUPPORTED_MODELS,
-        'default': 'resnet50',
+        'default': 'vit_b_16',
     },
     '--test_set_batch_size': {
         'type': int,
@@ -112,7 +171,7 @@ DEFAULT_KWARGS = dict(
     test_set_batch_size=64,
     num_epochs=18,
     momentum=0.9,
-    lr=0.1,
+    lr=0.01,
     target_accuracy=0.0,
 )
 MODEL_SPECIFIC_DEFAULTS = {
@@ -138,7 +197,7 @@ for arg, value in default_value_dict.items():
 def get_model_property(key):
     default_model_property = {
         'img_dim': 224,
-        'model_fn': getattr(torchvision.models, FLAGS.model)
+        'model_fn': getattr(torchvision.models, FLAGS.model.replace("_freq",""))
     }
     model_properties = {
         'inception_v3': {
@@ -276,6 +335,7 @@ def make_val_loader(img_dim, resize_dim, batch_size=FLAGS.test_set_batch_size):
     
 def train_imagenet():
     print('==> Preparing data..')
+    print("Optim is for Adam ViT")
     img_dim = get_model_property('img_dim')
     resize_dim = max(img_dim, 256)
     train_loader = make_train_loader(img_dim, batch_size=FLAGS.batch_size, shuffle=10000)
@@ -286,14 +346,16 @@ def train_imagenet():
 
     device = xm.xla_device()
     model = get_model_property('model_fn')().to(device)
+    if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
     writer = None
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
-    optimizer = optim.SGD(
+    optimizer = optim.Adam(
         model.parameters(),
         lr=FLAGS.lr,
-        momentum=FLAGS.momentum,
-        weight_decay=1e-4)
+        weight_decay=0.2,
+        betas=(0.9, 0.98),
+        eps=1e-6)
     num_training_steps_per_epoch = trainsize // (
         FLAGS.batch_size * xm.xrt_world_size())
     lr_scheduler = schedulers.wrap_optimizer_with_scheduler(
