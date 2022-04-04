@@ -172,6 +172,7 @@ DEFAULT_KWARGS = dict(
     num_epochs=18,
     momentum=0.9,
     lr=0.01,
+    wd=0.05,
     target_accuracy=0.0,
 )
 MODEL_SPECIFIC_DEFAULTS = {
@@ -353,7 +354,7 @@ def train_imagenet():
     optimizer = optim.AdamW(
         model.parameters(),
         lr=FLAGS.lr,
-        weight_decay=0.2,
+        weight_decay=FLAGS.wd,
         betas=(0.9, 0.98),
         eps=1e-6)
     num_training_steps_per_epoch = trainsize // (
