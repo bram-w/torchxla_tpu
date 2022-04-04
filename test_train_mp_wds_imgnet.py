@@ -136,6 +136,10 @@ MODEL_OPTS = {
         'type': int,
         'default': 50000,
     },
+    '--wd': {
+        'type': float,
+        'default': 0.05,
+    },
     '--save_model': {
         'type': str,
         'default': "",
