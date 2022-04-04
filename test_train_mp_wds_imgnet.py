@@ -141,6 +141,10 @@ MODEL_OPTS = {
         'type': float,
         'default': 0.05,
     },
+    '--optim': {
+        'type': str,
+        'default': "Adam",
+    },
     '--save_model': {
         'type': str,
         'default': "",
@@ -335,7 +339,7 @@ def make_val_loader(img_dim, resize_dim, batch_size=FLAGS.test_set_batch_size):
     
 def train_imagenet():
     print('==> Preparing data..')
-    print("Optim is for Adam ViT")
+    print(f"Optim is for {FLAGS.optim} ViT")
     img_dim = get_model_property('img_dim')
     resize_dim = max(img_dim, 256)
     train_loader = make_train_loader(img_dim, batch_size=FLAGS.batch_size, shuffle=10000)
@@ -350,7 +354,8 @@ def train_imagenet():
     writer = None
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
-    optimizer = optim.AdamW(
+    optim_call = eval(f"optim.{FLAGS.optim}")
+    optimizer = optima_call(
         model.parameters(),
         lr=FLAGS.lr,
         weight_decay=FLAGS.wd,
