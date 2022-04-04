@@ -112,9 +112,11 @@ MODEL_OPTS = {
     },
     '--lr_scheduler_divide_every_n_epochs': {
         'type': int,
+        'default' : 20,
     },
     '--lr_scheduler_divisor': {
         'type': int,
+        'default' : 5,
     },
     '--dataset': {
         'choices': ['gcsdataset', 'torchdataset'],
