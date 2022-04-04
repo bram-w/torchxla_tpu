@@ -141,6 +141,10 @@ MODEL_OPTS = {
         'type': float,
         'default': 0.05,
     },
+    '--dropout': {
+        'type': float,
+        'default': 0.0,
+    },
     '--optim': {
         'type': str,
         'default': "Adam",
@@ -349,7 +353,10 @@ def train_imagenet():
     server = xp.start_server(FLAGS.profiler_port)
 
     device = xm.xla_device()
-    model = get_model_property('model_fn')().to(device)
+    if 'vit' in FLAGS.model:
+        model = get_model_property('model_fn')(dropout=FLAGS.dropout).to(device)
+    else:
+        model = get_model_property('model_fn')().to(device)
     if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
     writer = None
     if xm.is_master_ordinal():
