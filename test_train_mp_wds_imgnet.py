@@ -367,9 +367,7 @@ def train_imagenet():
     optimizer = optim_call(
         model.parameters(),
         lr=FLAGS.lr,
-        weight_decay=FLAGS.wd,
-        betas=(0.9, 0.98),
-        eps=1e-6)
+        weight_decay=FLAGS.wd)
     num_training_steps_per_epoch = trainsize // (
         FLAGS.batch_size * xm.xrt_world_size())
     lr_scheduler = schedulers.wrap_optimizer_with_scheduler(
