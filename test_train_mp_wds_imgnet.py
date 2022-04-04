@@ -108,7 +108,7 @@ MODEL_OPTS = {
     },
     '--lr_scheduler_type': {
         'type': str,
-        'default' : ''WarmupAndExponentialDecayScheduler'
+        'default' : 'WarmupAndExponentialDecayScheduler'
     },
     '--lr_scheduler_divide_every_n_epochs': {
         'type': int,
