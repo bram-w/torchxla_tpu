@@ -108,6 +108,7 @@ MODEL_OPTS = {
     },
     '--lr_scheduler_type': {
         'type': str,
+        'default' : ''WarmupAndExponentialDecayScheduler'
     },
     '--lr_scheduler_divide_every_n_epochs': {
         'type': int,
@@ -157,6 +158,8 @@ MODEL_OPTS = {
         'default': "",
     },
 }
+
+        
 FLAGS = args_parse.parse_common_options(
     datadir='/tmp/imagenet',
     batch_size=None,
@@ -182,14 +185,6 @@ DEFAULT_KWARGS = dict(
 MODEL_SPECIFIC_DEFAULTS = {
     # Override some of the args in DEFAULT_KWARGS, or add them to the dict
     # if they don't exist.
-    'resnet50':
-        dict(
-            DEFAULT_KWARGS, **{
-                'lr': 0.5,
-                'lr_scheduler_divide_every_n_epochs': 20,
-                'lr_scheduler_divisor': 5,
-                'lr_scheduler_type': 'WarmupAndExponentialDecayScheduler',
-            })
 }
 
 # Set any args that were not explicitly given by the user.
