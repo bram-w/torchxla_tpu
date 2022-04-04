@@ -355,7 +355,7 @@ def train_imagenet():
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
     optim_call = eval(f"optim.{FLAGS.optim}")
-    optimizer = optima_call(
+    optimizer = optim_call(
         model.parameters(),
         lr=FLAGS.lr,
         weight_decay=FLAGS.wd,
