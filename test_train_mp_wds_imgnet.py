@@ -168,7 +168,7 @@ MODEL_OPTS = {
         'default': "",
     },
     '--upload_chkpt': {
-        'type': 'store_true',
+        'action': 'store_true',
     },
 }
 
