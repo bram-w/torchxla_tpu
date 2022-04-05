@@ -167,6 +167,9 @@ MODEL_OPTS = {
         'type': str,
         'default': "",
     },
+    '--upload_chkpt': {
+        'type': 'store_true',
+    },
 }
 
         
@@ -492,7 +495,7 @@ def train_imagenet():
                     },
                     FLAGS.save_model,
                 )
-                if xm.is_master_ordinal():
+                if xm.is_master_ordinal() and FLAGS.upload_chkpt:
                     _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-chkpt.pt')
         
         max_accuracy = max(accuracy, max_accuracy)
