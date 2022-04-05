@@ -381,13 +381,22 @@ def train_imagenet():
         summary_writer=writer)
     loss_fn = nn.CrossEntropyLoss()
     if FLAGS.load_chkpt_file != "":
-        xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
-        _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
-        checkpoint = torch.load(FLAGS.load_chkpt_dir) # torch.load(FLAGS.load_chkpt_dir)
-        model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
-        model = model.to(device)
-#     server = xp.start_server(profiler_port)
-
+        xm.master_print("Attempting Restart from {}".format(FLAGS.load_chkpt_file))
+        checkpoint = None
+        if FLAGS.model_bucket:
+            _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
+            checkpoint = torch.load(FLAGS.load_chkpt_dir)
+            xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
+        elif os.path.exists(FLAGS.load_chkpt_file):
+            torch.load(FLAGS.load_chkpt_file)
+        if checkpoint is not None:
+            xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_chkpt_file))
+            model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
+            model = model.to(device)
+            optim.load_state_dict(checkpoint['opt_state_dict'])
+        else:
+            xm.master_print("No restart checkpoint found")
+        
     def train_loop_fn(loader, epoch):
         train_steps = trainsize // (FLAGS.batch_size * xm.xrt_world_size())
         tracker = xm.RateTracker()
@@ -447,7 +456,7 @@ def train_imagenet():
         best_valid_acc = 0.0
         start_epoch = 1
     
-    for epoch in range(1, FLAGS.num_epochs + 1):
+    for epoch in range(start_epoch, FLAGS.num_epochs + 1):
         xm.master_print('Epoch {} train begin {}'.format(
             epoch, test_utils.now()))
         replica_epoch_start = time.time()
