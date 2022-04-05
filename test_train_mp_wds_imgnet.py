@@ -394,7 +394,7 @@ def train_imagenet():
             xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_chkpt_file))
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
             model = model.to(device)
-            optim.load_state_dict(checkpoint['opt_state_dict'])
+            optimizer.load_state_dict(checkpoint['opt_state_dict'])
         else:
             xm.master_print("No restart checkpoint found")
         
