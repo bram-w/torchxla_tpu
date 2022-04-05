@@ -92,7 +92,7 @@ class PatchDCT(torch.nn.Sequential):
 
 MODEL_OPTS = {
     '--model': {
-        'type': str
+        'type': str,
         'default': 'vit_b_16',
     },
     '--test_set_batch_size': {
