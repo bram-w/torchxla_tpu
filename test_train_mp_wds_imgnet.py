@@ -358,6 +358,7 @@ def train_imagenet():
     if 'vit' in FLAGS.model:
         model = get_model_property('model_fn')(dropout=FLAGS.dropout).to(device)
     else:
+        assert not FLAGS.dropout
         model = get_model_property('model_fn')().to(device)
     if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
     writer = None
