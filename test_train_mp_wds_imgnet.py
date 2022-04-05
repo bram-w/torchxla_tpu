@@ -382,13 +382,14 @@ def train_imagenet():
     loss_fn = nn.CrossEntropyLoss()
     if FLAGS.load_chkpt_file != "":
         xm.master_print("Attempting Restart from {}".format(FLAGS.load_chkpt_file))
-        checkpoint = None
         if FLAGS.model_bucket:
             _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
             checkpoint = torch.load(FLAGS.load_chkpt_dir)
             xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
         elif os.path.exists(FLAGS.load_chkpt_file):
             torch.load(FLAGS.load_chkpt_file)
+        else:
+            checkpoint = None  
         if checkpoint is not None:
             xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_chkpt_file))
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
