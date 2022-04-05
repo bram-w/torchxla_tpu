@@ -387,7 +387,7 @@ def train_imagenet():
             checkpoint = torch.load(FLAGS.load_chkpt_dir)
             xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
         elif os.path.exists(FLAGS.load_chkpt_file):
-            torch.load(FLAGS.load_chkpt_file)
+            checkpoint = torch.load(FLAGS.load_chkpt_file)
         else:
             checkpoint = None  
         if checkpoint is not None:
