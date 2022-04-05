@@ -450,7 +450,7 @@ def train_imagenet():
     
     if checkpoint is not None:
         best_valid_acc = checkpoint['best_valid_acc']
-        start_epoch = checkpoint['epoch']
+        start_epoch = checkpoint['epoch'] + 1
         xm.master_print('Loaded Model CheckPoint: Epoch={}/{}, Val Accuracy={:.2f}%'.format(
             start_epoch, FLAGS.num_epochs, best_valid_acc))
     else:
