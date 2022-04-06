@@ -489,7 +489,7 @@ def train_imagenet():
                 )
                 if xm.is_master_ordinal() and FLAGS.upload_chkpt:
                     _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-chkpt.pt')
-          xm.save(
+        xm.save(
                 {
                     "epoch": epoch,
                     "nepochs": FLAGS.num_epochs,
