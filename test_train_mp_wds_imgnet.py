@@ -489,6 +489,16 @@ def train_imagenet():
                 )
                 if xm.is_master_ordinal() and FLAGS.upload_chkpt:
                     _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-chkpt.pt')
+          xm.save(
+                {
+                    "epoch": epoch,
+                    "nepochs": FLAGS.num_epochs,
+                    "model_state_dict": model.state_dict(),
+                    "curr_valid_acc": accuracy,
+                    "opt_state_dict": optimizer.state_dict(),
+                },
+                'CURRENT_' + FLAGS.save_model,
+            )
         
         max_accuracy = max(accuracy, max_accuracy)
         test_utils.write_to_summary(
