@@ -320,7 +320,8 @@ def train_imagenet():
         total_samples = 0
         model.train()
         for step, (imgs, txts) in enumerate(loader):
-            txts = clip.tokenize(txts)
+            txts = clip.tokenize(txts).to(device)
+            imgs = imgs.to(device)
             optimizer.zero_grad()
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             target = torch.arange(txts.shape[0]).cuda()
@@ -352,7 +353,8 @@ def train_imagenet():
         total_local_samples, correct = 0, 0
         model.eval()
         for step, (imgs, txts) in enumerate(loader):
-            txts = clip.tokenize(txts)
+            txts = clip.tokenize(txts).to(device)
+            imgs = imgs.to(device)
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             target = torch.arange(txts.shape[0]).cuda()
             img_loss = F.cross_entropy(logits_per_image, target)
