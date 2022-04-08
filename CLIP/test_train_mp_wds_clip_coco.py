@@ -324,7 +324,7 @@ def train_imagenet():
             imgs = imgs.to(device)
             optimizer.zero_grad()
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            target = torch.arange(txts.shape[0]).cuda()
+            target = torch.arange(txts.shape[0]).to(device)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
@@ -356,7 +356,7 @@ def train_imagenet():
             txts = clip.tokenize(txts).to(device)
             imgs = imgs.to(device)
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            target = torch.arange(txts.shape[0]).cuda()
+            target = torch.arange(txts.shape[0]).to(device)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
