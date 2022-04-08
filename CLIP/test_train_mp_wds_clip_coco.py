@@ -264,7 +264,7 @@ def train_imagenet():
 
     device = xm.xla_device()
     model, preprocess = clip.load(FLAGS.model, 
-                                  load_pretrained_weights=args.pretrained)
+                                  load_pretrained_weights=FLAGS.pretrained)
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
         
