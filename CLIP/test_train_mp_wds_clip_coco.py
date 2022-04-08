@@ -273,7 +273,6 @@ def train_imagenet():
                                      batch_size=FLAGS.batch_size,
                                      shuffle=10000)
     test_loader = make_val_loader(preprocess,
-                                  resize_dim,
                                   batch_size=FLAGS.test_set_batch_size)
     writer = None
     if xm.is_master_ordinal():
