@@ -331,7 +331,7 @@ def train_imagenet():
             loss.backward()
             xm.optimizer_step(optimizer)
             tracker.add(FLAGS.batch_size)
-            total_samples += data.size()[0]
+            total_samples += imgs.size()[0]
             if lr_scheduler:
                 lr_scheduler.step()
             if step % FLAGS.log_steps == 0:
@@ -363,7 +363,7 @@ def train_imagenet():
             pred = logits_per_image.max(1, keepdim=True)[1]
             correct += pred.eq(target.view_as(pred)).sum()
           
-            total_local_samples += data.size()[0]
+            total_local_samples += imgs.size()[0]
             if step % FLAGS.log_steps == 0:
                 xm.add_step_closure(
                     test_utils.print_test_update, args=(device, None, epoch, step))
