@@ -328,7 +328,6 @@ def train_imagenet():
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
-            loss = loss_fn(output, target)
             loss.backward()
             xm.optimizer_step(optimizer)
             tracker.add(FLAGS.batch_size)
