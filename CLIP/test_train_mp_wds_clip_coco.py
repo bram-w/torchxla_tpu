@@ -225,7 +225,7 @@ def make_train_loader(image_transform,
                        shardshuffle=True, length=epoch_size)
         .shuffle(shuffle)
         .decode("pil")
-        .to_tuple("ppm;jpg;jpeg;png", "cls")
+        .to_tuple("ppm;jpg;jpeg;png", "txt")
         .map_tuple(image_transform, random.choice)
         .batched(batch_size, partial=True)
         )
@@ -243,7 +243,7 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
                        nodesplitter=my_node_splitter, 
                        shardshuffle=False, length=epoch_test_size) 
         .decode("pil")
-        .to_tuple("ppm;jpg;jpeg;png", "cls")
+        .to_tuple("ppm;jpg;jpeg;png", "txt")
         .map_tuple(image_transform, random.choice)
         .batched(batch_size, partial=True)
     )
