@@ -147,21 +147,6 @@ for arg, value in default_value_dict.items():
         setattr(FLAGS, arg, value)
 
 
-def get_model_property(key):
-    default_model_property = {
-        'img_dim': 224,
-        'model_fn': getattr(torchvision.models, FLAGS.model.replace("_freq",""))
-    }
-    model_properties = {
-        'inception_v3': {
-            'img_dim': 299,
-            'model_fn': lambda: torchvision.models.inception_v3(aux_logits=False)
-        },
-    }
-    model_fn = model_properties.get(FLAGS.model, default_model_property)[key]
-    return model_fn
-
-
 def _train_update(device, step, loss, tracker, epoch, writer):
     test_utils.print_training_update(
         device,
@@ -278,7 +263,7 @@ def train_imagenet():
     server = xp.start_server(FLAGS.profiler_port)
 
     device = xm.xla_device()
-    model, preprocess = clip.load(args.model, 
+    model, preprocess = clip.load(FLAGS.model, 
                                   load_pretrained_weights=args.pretrained)
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
