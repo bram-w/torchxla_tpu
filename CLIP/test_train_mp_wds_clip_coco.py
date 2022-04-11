@@ -403,9 +403,13 @@ def train_imagenet():
         accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         
         replica_train_samples, reduced_global = train_loop_fn(train_device_loader, epoch)
+        xm.master_print("Done with train loop")
         replica_epoch_time = time.time() - replica_epoch_start
+        xm.master_print(1)
         avg_epoch_time_mesh = xm.mesh_reduce('epoch_time', replica_epoch_time, np.mean)
+        xm.master_print(2)
         reduced_global = reduced_global * xm.xrt_world_size()
+        xm.master_print(3)
         xm.master_print('Epoch {} train end {}, Epoch Time={}, Replica Train Samples={}, Reduced GlobalRate={:.2f}'.format(
             epoch, test_utils.now(), 
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
