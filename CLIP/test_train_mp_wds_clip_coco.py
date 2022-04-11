@@ -378,7 +378,7 @@ def train_imagenet():
         total_correct = xm.mesh_reduce('all_num_correct', correct, np.sum)
         total_preds = xm.mesh_reduce('all_num_samples', total_local_samples, np.sum)
         accuracy = 100.0 * total_correct / total_preds
-        return accuracy, accuracy_replica, total_samples
+        return accuracy, accuracy_replica, total_preds
 
     train_device_loader = pl.MpDeviceLoader(train_loader, device)
     test_device_loader = pl.MpDeviceLoader(test_loader, device)
