@@ -78,7 +78,7 @@ MODEL_OPTS = {
     },
     '--wd': {
         'type': float,
-        'default': 0.05,
+        'default': 0.0,
     },
     '--dropout': {
         'type': float,
@@ -131,8 +131,8 @@ DEFAULT_KWARGS = dict(
     test_set_batch_size=64,
     num_epochs=18,
     momentum=0.9,
-    lr=0.01,
-    wd=0.05,
+    lr=0.001,
+    wd=0.00,
     target_accuracy=0.0,
 )
 MODEL_SPECIFIC_DEFAULTS = {
@@ -398,6 +398,9 @@ def train_imagenet():
         xm.master_print('Epoch {} train begin {}'.format(
             epoch, test_utils.now()))
         replica_epoch_start = time.time()
+        
+        xm.master_print("Surprise val loop!!!!")
+        accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         
         replica_train_samples, reduced_global = train_loop_fn(train_device_loader, epoch)
         replica_epoch_time = time.time() - replica_epoch_start
