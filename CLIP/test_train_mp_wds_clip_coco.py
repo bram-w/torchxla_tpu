@@ -335,6 +335,7 @@ def train_imagenet():
         for step, (imgs, txts) in enumerate(loader):
             txts = clip.tokenize(txts).to(device)
             imgs = imgs.to(device)
+            print(imgs.min(), imgs.max())
             optimizer.zero_grad()
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             target = torch.arange(txts.shape[0]).to(device)
