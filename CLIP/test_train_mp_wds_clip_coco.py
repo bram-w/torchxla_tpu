@@ -411,9 +411,6 @@ def train_imagenet():
             epoch, test_utils.now()))
         replica_epoch_start = time.time()
         
-        xm.master_print("Surprise val loop!!!!")
-        accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
-        
         replica_train_samples, reduced_global = train_loop_fn(train_device_loader, epoch)
         xm.master_print("Done with train loop")
         replica_epoch_time = time.time() - replica_epoch_start
