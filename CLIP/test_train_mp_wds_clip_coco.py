@@ -384,7 +384,7 @@ def train_imagenet():
                     test_utils.print_test_update, args=(device, None, epoch, step))
             if step == test_steps:
                 break
-        accuracy_replica = 100.0 * correct / total_local_samples
+        accuracy_replica = 100.0 * correct / total_local_samples if total_local_samples else np.nan
           
         # Modified this so can pass empty urls
         # accuracy = xm.mesh_reduce('test_accuracy', accuracy_replica, np.mean)
