@@ -257,7 +257,6 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
     
 def train_imagenet():
     print("TODO: Check 'shuffle' args")
-    print("TODO: Sort out SGD (mom) vs Adam optimizer")
     print("TODO: Base saving off of loss instead of acc?")
     print('==> Preparing data..')
     
@@ -266,7 +265,7 @@ def train_imagenet():
     server = xp.start_server(FLAGS.profiler_port)
 
     device = xm.xla_device()
-    model, preprocess = clip.load(FLAGS.model, 
+    model, preprocess = clip.load(FLAGS.model, download_root="/home/b.wallace/clip_cache/",
                                   load_pretrained_weights=FLAGS.pretrained)
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
