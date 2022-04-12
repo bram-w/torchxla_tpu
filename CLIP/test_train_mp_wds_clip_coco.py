@@ -333,6 +333,7 @@ def train_imagenet():
         total_samples = 0
         model.train()
         for step, (imgs, txts) in enumerate(loader):
+            print(txts)
             txts = clip.tokenize(txts).to(device)
             imgs = imgs.to(device)
             print(imgs.min(), imgs.max())
