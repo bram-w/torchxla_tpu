@@ -179,6 +179,9 @@ def _read_blob_gcs(BUCKET, CHKPT_FILE, DESTINATION):
 def identity(x):
     return x   
 
+def split_and_choose(x):
+    return random.choice(x.split('CAPTIONBREAK'))
+
 def my_worker_splitter(urls):
     """Split urls per worker
     Selects a subset of urls based on Torch get_worker_info.
@@ -226,7 +229,7 @@ def make_train_loader(image_transform,
         .shuffle(shuffle)
         .decode("pil")
         .to_tuple("ppm;jpg;jpeg;png", "txt")
-        .map_tuple(image_transform, lambda x: x)
+        .map_tuple(image_transform, identity)
         .batched(batch_size, partial=True)
         )
 
