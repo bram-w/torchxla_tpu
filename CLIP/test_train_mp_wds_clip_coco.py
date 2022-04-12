@@ -424,7 +424,7 @@ def train_imagenet():
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
             replica_train_samples, 
             reduced_global))
-        
+        """
         accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         xm.master_print('Epoch {} test end {}, Reduced Accuracy={:.2f}%, Replica Accuracy={:.2f}%, Replica Test Samples={}'.format(
             epoch, test_utils.now(), 
@@ -466,6 +466,7 @@ def train_imagenet():
             dict_to_write={'Accuracy/test': accuracy,
                            'Global Rate': reduced_global},
             write_xla_metrics=False)
+        """
         if FLAGS.metrics_debug:
             xm.master_print(met.metrics_report())
     test_utils.close_summary_writer(writer)
