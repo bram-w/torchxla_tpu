@@ -336,14 +336,11 @@ def train_imagenet():
         total_samples = 0
         model.train()
         for step, (imgs, txts) in enumerate(loader):
-            print(txts)
             txts = clip.tokenize(txts).to(device)
             imgs = imgs.to(device)
-            print(imgs.min(), imgs.max())
             optimizer.zero_grad()
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             target = torch.arange(txts.shape[0]).to(device)
-            print(logits_per_image.shape, target.shape)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
