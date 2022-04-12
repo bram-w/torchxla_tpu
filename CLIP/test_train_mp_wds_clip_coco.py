@@ -58,7 +58,7 @@ MODEL_OPTS = {
     '--dataset': {
         'choices': ['gcsdataset', 'torchdataset'],
         'default': 'gcsdataset',
-        'type': str,
+        'type': str,s
     },
     '--wds_traindir': {
         'type': str,
@@ -86,7 +86,7 @@ MODEL_OPTS = {
     },
     '--optim': {
         'type': str,
-        'default': "Adam",
+        'default': "SGD",
     },
     '--save_model': {
         'type': str,
@@ -255,7 +255,7 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
 def train_imagenet():
     print("TODO: Check 'shuffle' args")
     print("TODO: Sort out SGD (mom) vs Adam optimizer")
-    print("TODO: Base saving off of loss")
+    print("TODO: Base saving off of loss instead of acc?")
     print('==> Preparing data..')
     
 
@@ -278,10 +278,23 @@ def train_imagenet():
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
     optim_call = eval(f"optim.{FLAGS.optim}")
-    optimizer = optim_call(
-        model.parameters(),
-        lr=FLAGS.lr,
-        weight_decay=FLAGS.wd)
+    
+    # Below is ugly, should just make kwarg dict
+    # and delete momentum if feeding to Adam
+    if FLAGS.optim == 'SGD':
+        optimizer = optim_call(
+            model.parameters(),
+            lr=FLAGS.lr,
+            momentum=FLAGS.momentum,
+            weight_decay=FLAGS.wd)
+    elif FLAGS.optim == 'Adam':
+        optimizer = optim_call(
+            model.parameters(),
+            lr=FLAGS.lr,
+            weight_decay=FLAGS.wd)
+    else:
+        raise NotImplementedERror
+        
     num_training_steps_per_epoch = trainsize // (
         FLAGS.batch_size * xm.xrt_world_size())
     lr_scheduler = schedulers.wrap_optimizer_with_scheduler(
@@ -369,8 +382,7 @@ def train_imagenet():
                     test_utils.print_test_update, args=(device, None, epoch, step))
             if step == test_steps:
                 break
-        correct_val = correct.item()
-        accuracy_replica = 100.0 * correct_val / total_local_samples
+        accuracy_replica = 100.0 * correct / total_local_samples
           
         # Modified this so can pass empty urls
         # accuracy = xm.mesh_reduce('test_accuracy', accuracy_replica, np.mean)
@@ -405,11 +417,8 @@ def train_imagenet():
         replica_train_samples, reduced_global = train_loop_fn(train_device_loader, epoch)
         xm.master_print("Done with train loop")
         replica_epoch_time = time.time() - replica_epoch_start
-        xm.master_print(1)
         avg_epoch_time_mesh = xm.mesh_reduce('epoch_time', replica_epoch_time, np.mean)
-        xm.master_print(2)
         reduced_global = reduced_global * xm.xrt_world_size()
-        xm.master_print(3)
         xm.master_print('Epoch {} train end {}, Epoch Time={}, Replica Train Samples={}, Reduced GlobalRate={:.2f}'.format(
             epoch, test_utils.now(), 
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
