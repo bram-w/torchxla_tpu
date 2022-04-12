@@ -226,7 +226,7 @@ def make_train_loader(image_transform,
         .shuffle(shuffle)
         .decode("pil")
         .to_tuple("ppm;jpg;jpeg;png", "txt")
-        .map_tuple(image_transform, random.choice)
+        .map_tuple(image_transform, lambda x: x)
         .batched(batch_size, partial=True)
         )
 
