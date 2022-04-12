@@ -265,8 +265,7 @@ def train_imagenet():
     server = xp.start_server(FLAGS.profiler_port)
 
     device = xm.xla_device()
-    rank = xm.get_ordinal()
-    model, preprocess = clip.load(FLAGS.model, download_root=f"/home/b.wallace/clip_cache_{rank}/",
+    model, preprocess = clip.load(FLAGS.model, download_root=f"/home/b.wallace/clip_cache/",
                                   load_pretrained_weights=FLAGS.pretrained)
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
