@@ -247,7 +247,7 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
                        shardshuffle=False, length=epoch_test_size) 
         .decode("pil")
         .to_tuple("ppm;jpg;jpeg;png", "txt")
-        .map_tuple(image_transform, random.choice)
+        .map_tuple(image_transform, split_and_choose)
         .batched(batch_size, partial=True)
     )
 
