@@ -58,7 +58,7 @@ MODEL_OPTS = {
     '--dataset': {
         'choices': ['gcsdataset', 'torchdataset'],
         'default': 'gcsdataset',
-        'type': str,s
+        'type': str,
     },
     '--wds_traindir': {
         'type': str,
