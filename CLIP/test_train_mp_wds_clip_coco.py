@@ -214,6 +214,16 @@ def my_node_splitter(urls):
     
     return urls_this
 
+def my_node_splitter(urls):
+    """Split urls_ correctly per accelerator node
+    :param urls:
+    :return: slice of urls_
+    """
+
+    urls_this = urls.copy()
+    random.shuffle(urls_this)
+    
+    return urls_this
 
 
 def make_train_loader(image_transform,
@@ -256,7 +266,8 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
 
     
 def train_imagenet():
-    print("TODO: Check 'shuffle' args")
+    print("TODO: Check 'shuffle' args (currently doing FLAGS.batch_size")
+    print("TODO: Right now just giving all URL to all nodes")
     print("TODO: Base saving off of loss instead of acc?")
     print('==> Preparing data..')
     
@@ -274,7 +285,7 @@ def train_imagenet():
         
     train_loader = make_train_loader(preprocess,
                                      batch_size=FLAGS.batch_size,
-                                     shuffle=10000)
+                                     shuffle=FLAGS.batch_size)
     test_loader = make_val_loader(preprocess,
                                   batch_size=FLAGS.test_set_batch_size)
     writer = None
@@ -424,7 +435,7 @@ def train_imagenet():
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
             replica_train_samples, 
             reduced_global))
-        
+        """
         accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         xm.master_print('Epoch {} test end {}, Reduced Accuracy={:.2f}%, Replica Accuracy={:.2f}%, Replica Test Samples={}'.format(
             epoch, test_utils.now(), 
@@ -466,6 +477,7 @@ def train_imagenet():
             dict_to_write={'Accuracy/test': accuracy,
                            'Global Rate': reduced_global},
             write_xla_metrics=False)
+        """
         if FLAGS.metrics_debug:
             xm.master_print(met.metrics_report())
     test_utils.close_summary_writer(writer)
