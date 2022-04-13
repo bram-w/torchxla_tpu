@@ -217,7 +217,7 @@ def my_node_splitter(urls):
 
 
 def make_train_loader(image_transform,
-                      shuffle=10000, batch_size=FLAGS.batch_size):
+                      shuffle=FLAGS.batch_size, batch_size=FLAGS.batch_size):
     num_dataset_instances = xm.xrt_world_size() * FLAGS.num_workers
     epoch_size = trainsize // num_dataset_instances
 
@@ -256,7 +256,7 @@ def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
 
     
 def train_imagenet():
-    print("TODO: Check 'shuffle' args")
+    print("TODO: Check 'shuffle' args (currently doing FLAGS.batch_size")
     print("TODO: Base saving off of loss instead of acc?")
     print('==> Preparing data..')
     
