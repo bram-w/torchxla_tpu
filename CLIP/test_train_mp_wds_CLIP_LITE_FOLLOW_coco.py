@@ -32,7 +32,7 @@ for extra in ('/usr/share/torch-xla-1.8/pytorch/xla/test', '/pytorch/xla/test', 
     if os.path.exists(extra):
         sys.path.insert(0, extra)
 
-import schedulers
+from my_lr_scheduler import LinearWarmupCosineAnnealingLR
 import args_parse 
 
 
@@ -311,14 +311,9 @@ def train_imagenet():
             )
     num_training_steps_per_epoch = trainsize // (
         FLAGS.batch_size * xm.xrt_world_size())
-    lr_scheduler = schedulers.wrap_optimizer_with_scheduler(
-        optimizer,
-        scheduler_type=getattr(FLAGS, 'lr_scheduler_type', None),
-        scheduler_divisor=getattr(FLAGS, 'lr_scheduler_divisor', None),
-        scheduler_divide_every_n_epochs=getattr(
-            FLAGS, 'lr_scheduler_divide_every_n_epochs', None),
-        num_steps_per_epoch=num_training_steps_per_epoch,
-        summary_writer=writer)
+    lr_scheduler = LinearWarmupCosineAnnealingLR(optimizer,
+                                                 250000,
+                                                 10000)
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
     if FLAGS.load_chkpt_file != "":
