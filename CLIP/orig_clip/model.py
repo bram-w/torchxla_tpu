@@ -479,6 +479,7 @@ class CLIP(nn.Module):
 # NEed to import transformers module
 class CLIP_LITE_REPLICA(CLIP):
     def __init__(self):
+        super(CLIP_LITE_REPLICA, self).__init__()
         self.context_length = 77
         self.visual = ImageEncoder('resnet50')
         transformer_width = 512
