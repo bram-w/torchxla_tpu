@@ -35,6 +35,9 @@ for extra in ('/usr/share/torch-xla-1.8/pytorch/xla/test', '/pytorch/xla/test', 
 from my_lr_scheduler import LinearWarmupCosineAnnealingLR
 import args_parse 
 
+batch_size = 32 # for 32 cores hitting bs 1024
+num_workers = 8
+
 
 MODEL_OPTS = {
     '--model': {
@@ -127,26 +130,27 @@ FLAGS = args_parse.parse_common_options(
 
 
 
+
 DEFAULT_KWARGS = dict(
-    batch_size=128,
-    test_set_batch_size=64,
-    num_epochs=18,
-    momentum=0.9,
-    lr=0.001,
-    wd=0.00,
+    batch_size=32,
+    test_set_batch_size=None,
+    num_epochs=3906,
+    momentum=None,
+    lr=None,
+    wd=None,
     target_accuracy=0.0,
 )
 MODEL_SPECIFIC_DEFAULTS = {
     # Override some of the args in DEFAULT_KWARGS, or add them to the dict
     # if they don't exist.
 }
-
+"""
 # Set any args that were not explicitly given by the user.
 default_value_dict = MODEL_SPECIFIC_DEFAULTS.get(FLAGS.model, DEFAULT_KWARGS)
 for arg, value in default_value_dict.items():
     if getattr(FLAGS, arg) is None:
         setattr(FLAGS, arg, value)
-
+"""
 
 def _train_update(device, step, loss, tracker, epoch, writer):
     test_utils.print_training_update(
@@ -158,8 +162,7 @@ def _train_update(device, step, loss, tracker, epoch, writer):
         epoch,
         summary_writer=writer)
 
-trainsize = FLAGS.trainsize # 1280000
-testsize = FLAGS.testsize # 50000 
+trainsize = 65536
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     """Uploads a file to GCS bucket"""
@@ -218,8 +221,8 @@ def my_node_splitter(urls):
 
 
 def make_train_loader(image_transform,
-                      shuffle=10000, batch_size=FLAGS.batch_size):
-    num_dataset_instances = xm.xrt_world_size() * FLAGS.num_workers
+                      shuffle=10000, batch_size=batch_size):
+    num_dataset_instances = xm.xrt_world_size() * num_workers
     epoch_size = trainsize // num_dataset_instances
 
     dataset = (
@@ -234,27 +237,9 @@ def make_train_loader(image_transform,
         .batched(batch_size, partial=True)
         )
 
-    loader = torch.utils.data.DataLoader(dataset, batch_size=None, shuffle=False, drop_last=False, num_workers=FLAGS.num_workers)
+    loader = torch.utils.data.DataLoader(dataset, batch_size=None, shuffle=False, drop_last=False, num_workers=num_workers)
     return loader
   
-def make_val_loader(image_transform, batch_size=FLAGS.test_set_batch_size):
-    num_dataset_instances = xm.xrt_world_size() * FLAGS.num_workers
-    epoch_test_size = testsize // num_dataset_instances
-
-    val_dataset = (
-        wds.WebDataset(FLAGS.wds_testdir, # FLAGS.wds_testdir, 
-                       splitter=my_worker_splitter, 
-                       nodesplitter=my_node_splitter, 
-                       shardshuffle=False, length=epoch_test_size) 
-        .decode("pil")
-        .to_tuple("ppm;jpg;jpeg;png", "txt")
-        .map_tuple(image_transform, split_and_choose)
-        .batched(batch_size, partial=True)
-    )
-
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=None, shuffle=False, num_workers=FLAGS.num_workers) 
-    return val_loader
-
     
 def train_imagenet():
     print("TODO: Check 'shuffle' args")
@@ -292,13 +277,10 @@ def train_imagenet():
     
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
-        
-        
+
     train_loader = make_train_loader(preprocess,
-                                     batch_size=FLAGS.batch_size,
-                                     shuffle=10000)
-    test_loader = make_val_loader(preprocess,
-                                  batch_size=FLAGS.test_set_batch_size)
+                                     batch_size=batch_size,
+                                     shuffle=4*batch_size)
     writer = None
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
@@ -310,13 +292,14 @@ def train_imagenet():
             eps=1e-8
             )
     num_training_steps_per_epoch = trainsize // (
-        FLAGS.batch_size * xm.xrt_world_size())
+        batch_size * xm.xrt_world_size())
     lr_scheduler = LinearWarmupCosineAnnealingLR(optimizer,
                                                  250000,
                                                  10000)
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
     if FLAGS.load_chkpt_file != "":
+        raise NotImplementedError
         xm.master_print("Attempting Restart from {}".format(FLAGS.load_chkpt_file))
         if FLAGS.model_bucket:
             _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
@@ -337,7 +320,7 @@ def train_imagenet():
           
           
     def train_loop_fn(loader, epoch):
-        train_steps = trainsize // (FLAGS.batch_size * xm.xrt_world_size())
+        train_steps = trainsize // (batch_size * xm.xrt_world_size())
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
@@ -352,7 +335,7 @@ def train_imagenet():
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
             xm.optimizer_step(optimizer)
-            tracker.add(FLAGS.batch_size)
+            tracker.add(batch_size)
             total_samples += imgs.size()[0]
             if lr_scheduler:
                 lr_scheduler.step()
