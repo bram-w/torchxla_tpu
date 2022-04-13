@@ -492,7 +492,7 @@ class CLIP_LITE_REPLICA(nn.Module):
         )
         
         self.vocab_size = 49408
-        self.token_embedding = nn.Embedding(vocab_size, transformer_width)
+        self.token_embedding = nn.Embedding(self.vocab_size, transformer_width)
         self.positional_embedding = nn.Parameter(torch.empty(self.context_length, transformer_width))
         self.ln_final = LayerNorm(transformer_width)
 
