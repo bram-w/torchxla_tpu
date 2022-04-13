@@ -217,7 +217,7 @@ def my_node_splitter(urls):
 
 
 def make_train_loader(image_transform,
-                      shuffle=FLAGS.batch_size, batch_size=FLAGS.batch_size):
+                      shuffle=10000, batch_size=FLAGS.batch_size):
     num_dataset_instances = xm.xrt_world_size() * FLAGS.num_workers
     epoch_size = trainsize // num_dataset_instances
 
@@ -274,7 +274,7 @@ def train_imagenet():
         
     train_loader = make_train_loader(preprocess,
                                      batch_size=FLAGS.batch_size,
-                                     shuffle=10000)
+                                     shuffle=FLAGS.batch_size)
     test_loader = make_val_loader(preprocess,
                                   batch_size=FLAGS.test_set_batch_size)
     writer = None
