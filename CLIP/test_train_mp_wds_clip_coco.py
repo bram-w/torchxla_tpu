@@ -218,7 +218,7 @@ def my_node_splitter(urls):
     """Split urls_ correctly per accelerator node
     :param urls:
     :return: slice of urls_
-    """)
+    """
 
     urls_this = urls.copy()
     random.shuffle(urls_this)
