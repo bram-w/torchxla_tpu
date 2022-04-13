@@ -487,7 +487,7 @@ class CLIP_LITE_REPLICA(nn.Module):
         self.transformer = Transformer(
             width=transformer_width,
             layers=2,
-            heads=8,
+            heads=12,
             attn_mask=self.build_attention_mask()
         )
         
