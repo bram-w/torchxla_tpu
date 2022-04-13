@@ -482,12 +482,12 @@ class CLIP_LITE_REPLICA(nn.Module):
         super().__init__()
         self.context_length = 77
         self.visual = ImageEncoder('resnet50')
-        transformer_width = 512
+        transformer_width = 768
         embed_dim = 2048
         self.transformer = Transformer(
             width=transformer_width,
             layers=2,
-            heads=12,
+            heads=8,
             attn_mask=self.build_attention_mask()
         )
         
