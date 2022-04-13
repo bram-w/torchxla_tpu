@@ -277,7 +277,7 @@ def train_imagenet():
     model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
 
-    train_loader = make_train_loader(preprocess,
+    train_loader = make_train_loader(preprocess_train,
                                      batch_size=batch_size,
                                      shuffle=4*batch_size)
     writer = None
