@@ -342,29 +342,7 @@ class VisionTransformer(nn.Module):
 
         return x
 
-# NEed to import transformers module
-class CLIP_LITE_REPLICA(CLIP):
-    def __init__(self):
-        self.context_length = 77
-        self.visual = ImageEncoder('resnet50')
-        transformer_width = 512
-        embed_dim = 2048
-        self.transformer = Transformer(
-            width=transformer_width,
-            layers=2,
-            heads=12,
-            attn_mask=self.build_attention_mask()
-        )
-        
-        self.vocab_size = 49408
-        self.token_embedding = nn.Embedding(vocab_size, transformer_width)
-        self.positional_embedding = nn.Parameter(torch.empty(self.context_length, transformer_width))
-        self.ln_final = LayerNorm(transformer_width)
 
-        self.text_projection = nn.Parameter(torch.empty(transformer_width, embed_dim))
-        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
-
-        self.initialize_parameters()
         
 
 class CLIP(nn.Module):
@@ -498,6 +476,30 @@ class CLIP(nn.Module):
         # shape = [global_batch_size, global_batch_size]
         return logits_per_image, logits_per_text
 
+# NEed to import transformers module
+class CLIP_LITE_REPLICA(CLIP):
+    def __init__(self):
+        self.context_length = 77
+        self.visual = ImageEncoder('resnet50')
+        transformer_width = 512
+        embed_dim = 2048
+        self.transformer = Transformer(
+            width=transformer_width,
+            layers=2,
+            heads=12,
+            attn_mask=self.build_attention_mask()
+        )
+        
+        self.vocab_size = 49408
+        self.token_embedding = nn.Embedding(vocab_size, transformer_width)
+        self.positional_embedding = nn.Parameter(torch.empty(self.context_length, transformer_width))
+        self.ln_final = LayerNorm(transformer_width)
+
+        self.text_projection = nn.Parameter(torch.empty(transformer_width, embed_dim))
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+
+        self.initialize_parameters()    
+    
 
 def convert_weights(model: nn.Module):
     """Convert applicable model parameters to fp16"""
