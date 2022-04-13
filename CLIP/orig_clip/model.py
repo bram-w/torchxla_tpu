@@ -7,6 +7,113 @@ import torch.nn.functional as F
 from torch import nn
 import encoder
 
+from torchvision.models import resnet18, resnet34, vgg19, resnet50, resnet101, resnet152
+import torchvision
+from typing import Any, Dict, Union
+
+
+class ImageEncoder(nn.Module):
+    r"""
+    An image encoder from `Torchvision model zoo
+    <https://pytorch.org/docs/stable/torchvision/models.html>`_. Any model can
+    be specified using corresponding method name from the model zoo.
+    Parameters
+    ----------
+    img_enc_net: str, optional (default = "resnet50")
+        Name of the model from Torchvision model zoo.
+    pretrained: bool, optional (default = False)
+        Whether to load ImageNet pretrained weights from Torchvision.
+    frozen: float, optional (default = False)
+        Whether to keep all weights frozen during training.
+    """
+
+    def __init__(
+        self,
+        img_enc_net: str = "resnet50",
+        pretrained: bool = False,
+        frozen: bool = False,
+    ):
+        super(ImageEncoder, self).__init__()
+
+        self.img_encoder = getattr(torchvision.models, img_enc_net)(
+            pretrained, zero_init_residual=False
+        )
+
+        # Do nothing at the last layer
+        self.img_encoder.fc = nn.Identity()
+
+        # Freeze all weights if specified.
+        if frozen:
+            for param in self.img_encoder.parameters():
+                param.requires_grad = False
+            self.img_encoder.eval()
+
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
+        r"""
+        Compute visual features for a batch of input images.
+        Parameters
+        ----------
+        image: torch.Tensor
+            Batch of input images. A tensor of shape
+            ``(batch_size, 3, height, width)``.
+        Returns
+        -------
+        torch.Tensor
+            A tensor of shape ``(batch_size, fc_feature_size)``, for
+            example it will be ``(batch_size, 2048)`` for ResNet-50.
+        """
+        x = self.img_encoder(image)
+
+        return x.view(x.size(0), x.size(1))
+
+    def detectron2_backbone_state_dict(self) -> Dict[str, Any]:
+        r"""
+        Return state dict of visual backbone which can be loaded with
+        `Detectron2 <https://github.com/facebookresearch/detectron2>`_.
+        This is useful for downstream tasks based on Detectron2 (such as
+        object detection and instance segmentation). This method renames
+        certain parameters from Torchvision-style to Detectron2-style.
+        Returns
+        -------
+        Dict[str, Any]
+            A dict with three keys: ``{"model", "author", "matching_heuristics"}``.
+            These are necessary keys for loading this state dict properly with
+            Detectron2.
+        """
+        # Detectron2 backbones have slightly different module names, this mapping
+        # lists substrings of module names required to be renamed for loading a
+        # torchvision model into Detectron2.
+        DETECTRON2_RENAME_MAPPING: Dict[str, str] = {
+            "layer1": "res2",
+            "layer2": "res3",
+            "layer3": "res4",
+            "layer4": "res5",
+            "bn1": "conv1.norm",
+            "bn2": "conv2.norm",
+            "bn3": "conv3.norm",
+            "downsample.0": "shortcut",
+            "downsample.1": "shortcut.norm",
+        }
+        # Populate this dict by renaming module names.
+        d2_backbone_dict: Dict[str, torch.Tensor] = {}
+
+        for name, param in self.img_encoder.state_dict().items():
+            for old, new in DETECTRON2_RENAME_MAPPING.items():
+                name = name.replace(old, new)
+
+            # First conv and bn module parameters are prefixed with "stem.".
+            if not name.startswith("res"):
+                name = f"stem.{name}"
+
+            d2_backbone_dict[name] = param
+
+        return {
+            "model": d2_backbone_dict,
+            "__author__": "VLInfo",
+            "matching_heuristics": True,
+        }
+
+
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -239,7 +346,7 @@ class VisionTransformer(nn.Module):
 class CLIP_LITE_REPLICA(CLIP):
     def __init__(self):
         self.context_length = 77
-        self.visual = encoder.ImageEncoder('resnet50')
+        self.visual = ImageEncoder('resnet50')
         transformer_width = 512
         embed_dim = 2048
         self.transformer = Transformer(
