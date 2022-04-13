@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
-import encoder
+# import encoder
 
 from torchvision.models import resnet18, resnet34, vgg19, resnet50, resnet101, resnet152
 import torchvision
