@@ -543,16 +543,20 @@ class CLIP_LITE_REPLICA(nn.Module):
         return self.visual.conv1.weight.dtype
 
     def encode_image(self, image):
-        return self.visual(image.type(self.dtype))
+        # return self.visual(image.type(self.dtype))
+        return self.visual(image)
 
     def encode_text(self, text):
-        x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
+        # x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
+        x = self.token_embedding(text)  # [batch_size, n_ctx, d_model]
 
-        x = x + self.positional_embedding.type(self.dtype)
+        # x = x + self.positional_embedding.type(self.dtype)
+        x = x + self.positional_embedding
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
-        x = self.ln_final(x).type(self.dtype)
+        # x = self.ln_final(x).type(self.dtype)
+        x = self.ln_final(x)
 
         # x.shape = [batch_size, n_ctx, transformer.width]
         # take features from the eot embedding (eot_token is the highest number in each sequence)
