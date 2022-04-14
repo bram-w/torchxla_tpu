@@ -412,6 +412,14 @@ def train_imagenet():
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
             replica_train_samples, 
             reduced_global))
+        xm.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "opt_state_dict": optimizer.state_dict(),
+                },
+                'current.ckpt',
+                 )
         """
         accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         xm.master_print('Epoch {} test end {}, Reduced Accuracy={:.2f}%, Replica Accuracy={:.2f}%, Replica Test Samples={}'.format(
