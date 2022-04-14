@@ -407,7 +407,7 @@ def train_imagenet():
         return accuracy, accuracy_replica, total_preds
 
     train_device_loader = pl.MpDeviceLoader(train_loader, device)
-    # test_device_loader = pl.MpDeviceLoader(test_loader, device)
+    test_device_loader = pl.MpDeviceLoader(test_loader, device)
     accuracy, max_accuracy = 0.0, 0.0
     training_start_time = time.time()
     
