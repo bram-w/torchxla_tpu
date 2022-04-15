@@ -17,9 +17,10 @@
 
 """
 Current issues
-- Batch term after just 60 steps [ accidnetlaly set to 250 steps (250*1024 = 256k trainsize) (so 1000 epochs total) instead of 1k steps (so 250 "epochs" at trainsize 1024000
+- Batch term after just 60 steps [ accidnetlaly set to 250 steps (250*1024 = 256k trainsize) (so 1000 epochs total) instead of 1k steps (so 250 "epochs" at trainsize 1024000 [FIXED]
 - Checkpoint resume didn't work (Wasn't found) [reason was misaligned ckpt and ckpt (group replaced all) [indeed resumes from correct epoch!!!!!]
 - Unsure of LR scheduler behavior with resume
+    This has state dict too! So implement off that
 """
 
 import torch_xla.test.test_utils as test_utils
@@ -310,6 +311,7 @@ def train_imagenet():
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
             model = model.to(device)
             optimizer.load_state_dict(checkpoint['opt_state_dict'])
+            lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
         else:
             xm.master_print("No restart checkpoint found")
  
@@ -418,6 +420,7 @@ def train_imagenet():
                     "epoch": epoch,
                     "model_state_dict": model.state_dict(),
                     "opt_state_dict": optimizer.state_dict(),
+                    "lr_scheduler_state_dict": lr_scheduler.state_dict(),
                 },
                 'current.ckpt',
                  )
