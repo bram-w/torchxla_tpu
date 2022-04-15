@@ -325,12 +325,11 @@ def train_imagenet():
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
-        for step, (imgs, txts) in enumerate(loader):
-            txts = clip.tokenize(txts).to(device)
-            imgs = imgs.to(device)
+        for step, (imgs, txts_raw) in enumerate(loader):
             optimizer.zero_grad()
+            txts = clip.tokenize(txts_raw)
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            target = torch.arange(txts.shape[0]).to(device)
+            target = torch.arange(txts.shape[0])
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
