@@ -256,7 +256,7 @@ def train_imagenet():
     rank=xm.get_ordinal()
     # model, preprocess = clip.load(FLAGS.model, download_root=f"/home/b.wallace/clip_cache_{rank}/",
     #                               load_pretrained_weights=FLAGS.pretrained)
-    model = clip_model_lib.CLIP_LITE_REPLICA()
+    model = clip_model_lib.CLIP_LITE_REPLICA().to(device)
     preprocess_train = transforms.Compose([transforms.RandomResizedCrop(224, (0.2, 1)),
                                             transforms.ColorJitter(brightness=0.4,
                                                                 contrast=0.4,
@@ -276,7 +276,6 @@ def train_imagenet():
                                         ])
                                            
     
-    model = model.to(device)
     # if 'freq' in FLAGS.model: model.conv_proj = PatchDCT(16, 3)
 
     train_loader = make_train_loader(preprocess_train,
