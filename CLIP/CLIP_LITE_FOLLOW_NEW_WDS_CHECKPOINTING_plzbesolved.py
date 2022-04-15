@@ -7,6 +7,21 @@
 # Also needed to add in checkpoint reloading logic 
 # should be matched to the example script, only concern is AdamW otim state
 
+
+
+#CURRENT STATE: Batch terminating after just 60 steps
+# attempting resume from checkpoint though
+# NOTE: Even with/if above working still will want to check resumptin logs
+# to see if lr went smoothly and all
+# Actually, LR scheduler is probably actualy important concern
+
+"""
+Current issues
+- Batch term after just 60 steps [ accidnetlaly set to 250 steps (250*1024 = 256k trainsize) (so 1000 epochs total) instead of 1k steps (so 250 "epochs" at trainsize 1024000
+- Checkpoint resume didn't work (Wasn't found) [reason was misaligned ckpt and ckpt (group replaced all) [indeed resumes from correct epoch!!!!!]
+- Unsure of LR scheduler behavior with resume
+"""
+
 import torch_xla.test.test_utils as test_utils
 import torch_xla.distributed.xla_multiprocessing as xmp
 import torch_xla.core.xla_model as xm
@@ -105,11 +120,11 @@ MODEL_OPTS = {
         'type': str,
         'default': "",
     },
-    '--load_chkpt_file': {
+    '--load_ckpt_file': {
         'type': str,
-        'default': "current.chkpt",
+        'default': "current.ckpt",
     },
-    '--load_chkpt_dir': {
+    '--load_ckpt_dir': {
         'type': str,
         'default': "",
     },
@@ -117,7 +132,7 @@ MODEL_OPTS = {
         'type': str,
         'default': "",
     },
-    '--upload_chkpt': {
+    '--upload_ckpt': {
         'action': 'store_true',
     },
     '--pretrained': {
@@ -174,7 +189,7 @@ def _train_update(device, step, loss, tracker, epoch, writer):
 # Did abotu 21.5k steps in 2 hours
 # so 1k steps is around 6 minutes
 # save every 1k steps, don't have to worry about sampling procedure any more with new webdataset!
-trainsize = 256000
+trainsize = 1024000
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     """Uploads a file to GCS bucket"""
@@ -185,11 +200,11 @@ def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     
     xm.master_print("Saved Model Checkpoint file {} and uploaded to {}.".format(source_file_name, os.path.join(gcs_uri, destination_blob_name)))
     
-def _read_blob_gcs(BUCKET, CHKPT_FILE, DESTINATION):
+def _read_blob_gcs(BUCKET, ckpt_FILE, DESTINATION):
     """Downloads a file from GCS to local directory"""
     client = storage.Client()
     bucket = client.get_bucket(BUCKET)
-    blob = bucket.get_blob(CHKPT_FILE)
+    blob = bucket.get_blob(ckpt_FILE)
     blob.download_to_filename(DESTINATION)
     
 def identity(x):
@@ -279,18 +294,19 @@ def train_imagenet():
                                                  10000)
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
-    if FLAGS.load_chkpt_file != "":
-        xm.master_print("Attempting Restart from {}".format(FLAGS.load_chkpt_file))
+    if FLAGS.load_ckpt_file != "":
+        xm.master_print("Attempting Restart from {}".format(FLAGS.load_ckpt_file))
         if FLAGS.model_bucket:
             raise NotImplementedError
-            _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
-            checkpoint = torch.load(FLAGS.load_chkpt_dir)
-            xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
-        elif os.path.exists(FLAGS.load_chkpt_file):
-            checkpoint = torch.load(FLAGS.load_chkpt_file)
+            _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_ckpt_file, FLAGS.load_ckpt_dir)
+            checkpoint = torch.load(FLAGS.load_ckpt_dir)
+            xm.master_print("Loading saved model {}".format(FLAGS.load_ckpt_file))
+        elif os.path.exists(FLAGS.load_ckpt_file):
+            xm.master_print("FOUND LOCAL FILE")
+            checkpoint = torch.load(FLAGS.load_ckpt_file)
             
         if checkpoint is not None:
-            xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_chkpt_file))
+            xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_ckpt_file))
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
             model = model.to(device)
             optimizer.load_state_dict(checkpoint['opt_state_dict'])
@@ -426,8 +442,8 @@ def train_imagenet():
                     },
                     FLAGS.save_model,
                 )
-                if xm.is_master_ordinal() and FLAGS.upload_chkpt:
-                    _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-chkpt.pt')
+                if xm.is_master_ordinal() and FLAGS.upload_ckpt:
+                    _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-ckpt.pt')
             xm.save(
                 {
                     "epoch": epoch,
