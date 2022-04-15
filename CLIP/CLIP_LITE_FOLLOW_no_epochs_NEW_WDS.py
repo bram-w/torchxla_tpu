@@ -327,9 +327,9 @@ def train_imagenet():
         model.train()
         for step, (imgs, txts_raw) in enumerate(loader):
             optimizer.zero_grad()
-            txts = clip.tokenize(txts_raw)
+            txts = clip.tokenize(txts_raw).to(xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            target = torch.arange(txts.shape[0])
+            target = torch.arange(txts.shape[0], device=xm.xla_device())
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             loss = (img_loss + txt_loss ) / 2
