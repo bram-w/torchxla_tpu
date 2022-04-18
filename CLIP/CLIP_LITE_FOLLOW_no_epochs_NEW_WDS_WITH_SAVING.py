@@ -353,7 +353,6 @@ def train_imagenet():
                 if step % 1000 == 0:
                     xm.master_print("Saving model...")
                     xm.master_print("Still need shuffle")
-                    xm.master_print("Still need restart logic")
                     xm.save(
                             {
                                 "epoch": epoch,
