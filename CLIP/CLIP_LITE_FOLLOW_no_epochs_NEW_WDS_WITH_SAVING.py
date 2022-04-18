@@ -94,7 +94,7 @@ MODEL_OPTS = {
     },
     '--save_model': {
         'type': str,
-        'default': "",
+        'default': "current.ckpt",
     },
     '--load_chkpt_file': {
         'type': str,
@@ -299,20 +299,23 @@ def train_imagenet():
                                                  10000)
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
-    if FLAGS.load_chkpt_file != "":
-        raise NotImplementedError
-        xm.master_print("Attempting Restart from {}".format(FLAGS.load_chkpt_file))
+    if FLAGS.load_ckpt_file != "":
+        xm.master_print("Attempting Restart from {}".format(FLAGS.load_ckpt_file))
         if FLAGS.model_bucket:
-            _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_chkpt_file, FLAGS.load_chkpt_dir)
-            checkpoint = torch.load(FLAGS.load_chkpt_dir)
-            xm.master_print("Loading saved model {}".format(FLAGS.load_chkpt_file))
-        elif os.path.exists(FLAGS.load_chkpt_file):
-            checkpoint = torch.load(FLAGS.load_chkpt_file)
+            raise NotImplementedError
+            _read_blob_gcs(FLAGS.model_bucket, FLAGS.load_ckpt_file, FLAGS.load_ckpt_dir)
+            checkpoint = torch.load(FLAGS.load_ckpt_dir)
+            xm.master_print("Loading saved model {}".format(FLAGS.load_ckpt_file))
+        elif os.path.exists(FLAGS.load_ckpt_file):
+            xm.master_print("FOUND LOCAL FILE")
+            checkpoint = torch.load(FLAGS.load_ckpt_file)
+            
         if checkpoint is not None:
-            xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_chkpt_file))
+            xm.master_print("FOUND: Restarting from {}".format(FLAGS.load_ckpt_file))
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
             model = model.to(device)
             optimizer.load_state_dict(checkpoint['opt_state_dict'])
+            lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
         else:
             xm.master_print("No restart checkpoint found")
  
