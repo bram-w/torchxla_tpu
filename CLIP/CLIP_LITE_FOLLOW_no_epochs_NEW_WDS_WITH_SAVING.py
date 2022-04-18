@@ -94,13 +94,13 @@ MODEL_OPTS = {
     },
     '--save_model': {
         'type': str,
-        'default': "current.ckpt",
-    },
-    '--load_chkpt_file': {
-        'type': str,
         'default': "",
     },
-    '--load_chkpt_dir': {
+    '--load_ckpt_file': {
+        'type': str,
+        'default': "current.ckpt",
+    },
+    '--load_ckpt_dir': {
         'type': str,
         'default': "",
     },
@@ -108,7 +108,7 @@ MODEL_OPTS = {
         'type': str,
         'default': "",
     },
-    '--upload_chkpt': {
+    '--upload_ckpt': {
         'action': 'store_true',
     },
     '--pretrained': {
@@ -174,11 +174,11 @@ def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     
     xm.master_print("Saved Model Checkpoint file {} and uploaded to {}.".format(source_file_name, os.path.join(gcs_uri, destination_blob_name)))
     
-def _read_blob_gcs(BUCKET, CHKPT_FILE, DESTINATION):
+def _read_blob_gcs(BUCKET, ckpt_FILE, DESTINATION):
     """Downloads a file from GCS to local directory"""
     client = storage.Client()
     bucket = client.get_bucket(BUCKET)
-    blob = bucket.get_blob(CHKPT_FILE)
+    blob = bucket.get_blob(ckpt_FILE)
     blob.download_to_filename(DESTINATION)
     
 def identity(x):
@@ -299,6 +299,7 @@ def train_imagenet():
                                                  10000)
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
+    start_step = 0
     if FLAGS.load_ckpt_file != "":
         xm.master_print("Attempting Restart from {}".format(FLAGS.load_ckpt_file))
         if FLAGS.model_bucket:
@@ -315,7 +316,9 @@ def train_imagenet():
             model.load_state_dict(checkpoint['model_state_dict']) #.to(device)
             model = model.to(device)
             optimizer.load_state_dict(checkpoint['opt_state_dict'])
-            lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
+            lr_scheduler_state_dict = checkpoint['lr_scheduler_state_dict']
+            lr_scheduler.load_state_dict(lr_scheduler_state_dict)
+            start_step = lr_scheduler_state_dict['_step_count']
         else:
             xm.master_print("No restart checkpoint found")
  
@@ -328,7 +331,8 @@ def train_imagenet():
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
-        for step, (imgs, txts_raw) in enumerate(loader):
+        for raw_step, (imgs, txts_raw) in enumerate(loader):
+            step = raw_step + start_step
             optimizer.zero_grad()
             txts = clip.tokenize(txts_raw).to(xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
@@ -429,16 +433,6 @@ def train_imagenet():
             str(datetime.timedelta(seconds=avg_epoch_time_mesh)).split('.')[0], 
             replica_train_samples, 
             reduced_global))
-        if not epoch%5:
-            xm.master_print("Saving model...")
-            xm.save(
-                    {
-                        "epoch": epoch,
-                        "model_state_dict": model.state_dict(),
-                        "opt_state_dict": optimizer.state_dict(),
-                    },
-                    'current.ckpt',
-                     )
         """
         accuracy, accuracy_replica, replica_test_samples = test_loop_fn(test_device_loader, epoch)
         xm.master_print('Epoch {} test end {}, Reduced Accuracy={:.2f}%, Replica Accuracy={:.2f}%, Replica Test Samples={}'.format(
@@ -460,8 +454,8 @@ def train_imagenet():
                     },
                     FLAGS.save_model,
                 )
-                if xm.is_master_ordinal() and FLAGS.upload_chkpt:
-                    _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-chkpt.pt')
+                if xm.is_master_ordinal() and FLAGS.upload_ckpt:
+                    _upload_blob_gcs(FLAGS.logdir, FLAGS.save_model, 'model-ckpt.pt')
             xm.save(
                 {
                     "epoch": epoch,
@@ -497,10 +491,6 @@ def _mp_fn(index, flags):
     FLAGS = flags
     torch.set_default_tensor_type('torch.FloatTensor')
     accuracy = train_imagenet()
-    if accuracy < FLAGS.target_accuracy:
-        print('Accuracy {} is below target {}'.format(accuracy,
-                                                      FLAGS.target_accuracy))
-        sys.exit(21)
 
 
 if __name__ == '__main__':
