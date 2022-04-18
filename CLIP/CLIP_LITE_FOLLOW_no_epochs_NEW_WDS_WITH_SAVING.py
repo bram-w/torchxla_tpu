@@ -246,8 +246,6 @@ def make_train_loader(image_transform,
 
     
 def train_imagenet():
-    print("TODO: Check 'shuffle' args")
-    print("TODO: Base saving off of loss instead of acc?")
     print('==> Preparing data..')
     
 
@@ -282,7 +280,7 @@ def train_imagenet():
 
     train_loader = make_train_loader(preprocess_train,
                                      batch_size=batch_size,
-                                     shuffle=4*batch_size)
+                                     shuffle=10000)
     writer = None
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
@@ -354,7 +352,6 @@ def train_imagenet():
                 test_utils.write_to_summary(writer, step, dict_to_write={'Rate_step': tracker.rate()}, write_xla_metrics=False)
                 if step % 1000 == 0:
                     xm.master_print("Saving model...")
-                    xm.master_print("Still need shuffle")
                     xm.save(
                             {
                                 "epoch": epoch,
