@@ -230,6 +230,7 @@ def make_train_loader(image_transform,
         wds.ResampledShards(FLAGS.wds_traindir),
         # we now have an iterator over all shards
         wds.tarfile_to_samples(),
+        wds.shuffle(10000),
         wds.decode("pil"),
         # we now have a list of decompressed train samples from each shard in this worker, in sequence
         wds.to_tuple("ppm;jpg;jpeg;png", "txt"),
