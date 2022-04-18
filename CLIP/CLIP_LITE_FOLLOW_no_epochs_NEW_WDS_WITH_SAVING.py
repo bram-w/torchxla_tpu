@@ -328,6 +328,7 @@ def train_imagenet():
           
     def train_loop_fn(loader, epoch):
         train_steps = trainsize // (batch_size * xm.xrt_world_size())
+        if start_step >= train_steps: return 0, 0
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
