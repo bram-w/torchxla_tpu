@@ -410,10 +410,12 @@ def train_imagenet():
     training_start_time = time.time()
     
     if checkpoint is not None:
-        best_valid_acc = checkpoint['best_valid_acc']
+        # best_valid_acc = checkpoint['best_valid_acc']
         start_epoch = checkpoint['epoch'] + 1
-        xm.master_print('Loaded Model CheckPoint: Epoch={}/{}, Val Accuracy={:.2f}%'.format(
-            start_epoch, FLAGS.num_epochs, best_valid_acc))
+        xm.master_print('Loaded Model CheckPoint: Epoch={}/{}'.format(
+                           start_epoch, FLAGS.num_epochs))
+        # xm.master_print('Loaded Model CheckPoint: Epoch={}/{}, Val Accuracy={:.2f}%'.format(
+        #     start_epoch, FLAGS.num_epochs, best_valid_acc))
     else:
         best_valid_acc = 0.0
         start_epoch = 1
