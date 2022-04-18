@@ -162,7 +162,8 @@ def _train_update(device, step, loss, tracker, epoch, writer):
         epoch,
         summary_writer=writer)
 
-trainsize = 655360000
+trainsize = 256000000 # This is 250k steps at 1024 --> 256 million
+assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     """Uploads a file to GCS bucket"""
@@ -339,7 +340,6 @@ def train_imagenet():
             if lr_scheduler:
                 lr_scheduler.step()
             if step % FLAGS.log_steps == 0:
-                assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
                 xm.add_step_closure(
                     _train_update, args=(device, step, loss, tracker, epoch, writer))
                 test_utils.write_to_summary(writer, step, dict_to_write={'Rate_step': tracker.rate()}, write_xla_metrics=False)
