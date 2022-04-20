@@ -275,7 +275,7 @@ def train_imagenet():
             model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
             step = raw_step + start_step
             optimizer.zero_grad()
-            txts = clip.tokenize(txts_raw).to(xm.xla_device())
+            txts = clip.tokenize(txts_raw, truncate=True).to(xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             target = torch.arange(txts.shape[0], device=xm.xla_device())
             img_loss = F.cross_entropy(logits_per_image, target)
