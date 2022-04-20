@@ -233,7 +233,7 @@ def train_imagenet():
     
     
     lr_scheduler = LinearWarmupCosineAnnealingLR(optimizer,
-                                                 num_steps,
+                                                 num_training_steps_per_epoch,
                                                  2000 * (32768/full_batch_size))
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
