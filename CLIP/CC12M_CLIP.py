@@ -14,7 +14,7 @@ import torch
 import numpy as np
 import sys
 import os
-import webdataset as wds
+import my_webdataset as wds
 import datetime
 import time
 from itertools import islice
