@@ -31,6 +31,6 @@ vit_l_14_opt_dict = {"lr":4e-4,
                     "adam_eps":10e-6}
 
 
-model_to_settings{ "ResNet50":(rn50_arch_dict, rn50_opt_dict),
+model_to_settings = { "ResNet50":(rn50_arch_dict, rn50_opt_dict),
                    "ViT-L/14":(vit_l_14_arch_dict, vit_l_14_opt_dict),
-                 }
+                   }
