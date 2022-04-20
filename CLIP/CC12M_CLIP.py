@@ -93,6 +93,10 @@ MODEL_OPTS = {
     '--upload_ckpt': {
         'action': 'store_true',
     },
+    '--save_steps': {
+        'type': int,
+        'default': 100,
+    },
 }
 
         
@@ -141,7 +145,7 @@ def _train_update(device, step, loss, tracker, epoch, writer):
 # assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
 # This is emulating SLIP-scale for CC12M
 trainsize = 350 * int(1e6) # our dataset is within 1% of 10 million and we're doing 35 epochs so 350M
-assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
+assert FLAGS.save_steps % FLAGS.log_steps == 0 # need to hit below logic
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     """Uploads a file to GCS bucket"""
@@ -295,7 +299,7 @@ def train_imagenet():
                 xm.add_step_closure(
                     _train_update, args=(device, step, loss, tracker, epoch, writer))
                 test_utils.write_to_summary(writer, step, dict_to_write={'Rate_step': tracker.rate()}, write_xla_metrics=False)
-                if step % 1000 == 0:
+                if step % FLAGS.save_steps == 0:
                     xm.master_print("Saving model...")
                     xm.save(
                             {
