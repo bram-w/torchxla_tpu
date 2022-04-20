@@ -136,7 +136,7 @@ def _train_update(device, step, loss, tracker, epoch, writer):
         epoch,
         summary_writer=writer)
 
-trainsize = (400*1e6) * (32) # This is 250k steps at 1024 --> 256 million
+trainsize = int((400*1e6) * (32)) # This is 250k steps at 1024 --> 256 million
 assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
@@ -234,7 +234,7 @@ def train_imagenet():
     
     lr_scheduler = LinearWarmupCosineAnnealingLR(optimizer,
                                                  num_training_steps_per_epoch,
-                                                 2000 * (32768/full_batch_size))
+                                                 int(2000 * (32768/full_batch_size)))
     loss_fn = nn.CrossEntropyLoss()
     checkpoint = None
     start_step = 0
