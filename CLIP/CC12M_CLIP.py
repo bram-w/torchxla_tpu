@@ -57,7 +57,7 @@ for extra in ('/usr/share/torch-xla-1.8/pytorch/xla/test', '/pytorch/xla/test', 
 from my_lr_scheduler import LinearWarmupCosineAnnealingLR
 import args_parse 
 
-batch_size = 128
+batch_size = 64
 num_workers = 8
 
 
