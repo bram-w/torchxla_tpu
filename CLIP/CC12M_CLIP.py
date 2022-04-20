@@ -272,7 +272,7 @@ def train_imagenet():
         model.train()
         for raw_step, (imgs, txts_raw) in enumerate(loader):
             # Below is needed to maintain good CLIP stability and isn't directly in model
-            self.model.logit_scale.data = torch.clamp(self.model.logit_scale.data, 0, 4.6052)
+            model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
             step = raw_step + start_step
             optimizer.zero_grad()
             txts = clip.tokenize(txts_raw).to(xm.xla_device())
