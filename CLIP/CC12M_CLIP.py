@@ -143,8 +143,12 @@ def _train_update(device, step, loss, tracker, epoch, writer):
 # Below is emulating CLIP-scale
 # trainsize = int((400*1e6) * (32)) # This is 250k steps at 1024 --> 256 million
 # assert 1000 % FLAGS.log_steps == 0 # need to hit below logic
+
+
 # This is emulating SLIP-scale for CC12M
-trainsize = 350 * int(1e6) # our dataset is within 1% of 10 million and we're doing 35 epochs so 350M
+# trainsize = 350 * int(1e6) # our dataset is within 1% of 10 million and we're doing 35 epochs so 350M
+# Upping by factor of 10 b/c didn't converge and this is possible suspect
+trainsize = 35 * 10* int(1e7) # 10x from above
 assert FLAGS.save_steps % FLAGS.log_steps == 0 # need to hit below logic
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
@@ -203,7 +207,7 @@ def train_imagenet():
     device = xm.xla_device()
     rank=xm.get_ordinal()
     model = clip_model_lib.CLIP(**model_to_settings[FLAGS.model][0]).to(device)
-    preprocess_train = transforms.Compose([transforms.RandomResizedCrop(224, (0.9, 1)), # 0.9 from mlfoundations (transorm.py)
+    preprocess_train = transforms.Compose([transforms.RandomResizedCrop(224, (0.5, 1)), # 0.5 from SLIP , 0.9 from mlfoundations (transorm.py)
                                          clip._convert_image_to_rgb,
                                          transforms.ToTensor(),
                                          transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073),
