@@ -243,7 +243,7 @@ def train_imagenet():
     opt_hparam_dict = model_to_settings[FLAGS.model][1]
     optimizer = optim.AdamW(
             model.parameters(),
-            lr=0*opt_hparam_dict['lr'],
+            lr=opt_hparam_dict['lr'],
             weight_decay=0.5,
             betas=(0.9, opt_hparam_dict['adam_beta2']),
             eps=opt_hparam_dict['adam_eps']
@@ -288,7 +288,6 @@ def train_imagenet():
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
-        model.eval()
         for raw_step, (imgs, txts_raw) in enumerate(loader):
             # Below is needed to maintain good CLIP stability and isn't directly in model
             model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
@@ -309,7 +308,7 @@ def train_imagenet():
             # print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
-            xm.optimizer_step(optimizer)
+            # xm.optimizer_step(optimizer)
             tracker.add(batch_size)
             total_samples += imgs.size()[0]
             if lr_scheduler:
