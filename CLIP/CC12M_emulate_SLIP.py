@@ -297,9 +297,9 @@ def train_imagenet():
                                                                 device=xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             # print("train loop fn logits info", logits_per_image.min(),
-                    logits_per_image.max(), logits_per_image.shape)
+            #         logits_per_image.max(), logits_per_image.shape)
             # print("train loop fn logits info", logits_per_text.min(),
-                    logits_per_text.max(), logits_per_text.shape)
+            #         logits_per_text.max(), logits_per_text.shape)
             # print(target, target.shape)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
