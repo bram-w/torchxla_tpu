@@ -37,9 +37,9 @@ slip_vit_b_16_arch_dict = {"embed_dim":512,
                      "vision_patch_size":16,
                      "context_length":77,
                      "vocab_size":49408,
-                     "transformer_heads":12,
+                     "transformer_layers":12,
                      "transformer_width":512,
-                     "transformer_layers":8}
+                     "transformer_heads":8}
 
 clip_vit_b_16_opt_dict = {"lr":5e-4,
                         "adam_beta2":0.98,
