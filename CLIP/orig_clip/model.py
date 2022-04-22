@@ -479,9 +479,13 @@ class CLIP(nn.Module):
         global_image_features = gather_tensor_with_backward(image_features)
         global_text_features = gather_tensor_with_backward(text_features)
         print(global_image_features.shape, global_text_features.shape)
+        print(global_image_features.min(), global_text_features.min())
+        print(global_image_features.max(), global_text_features.max())
         logits_per_image = logit_scale * image_features @ global_text_features.t()
         logits_per_text = logit_scale * text_features @ global_image_features.t()
         print(logits_per_image.shape, logits_per_text.shape)
+        print(logits_per_image.min(), logits_per_text.min())
+        print(logits_per_image.max(), logits_per_text.max())
         # shape = [local_batch_size, global_batch_size]
         return logits_per_image, logits_per_text
 
