@@ -101,7 +101,7 @@ MODEL_OPTS = {
     },
     '--shuffle': {
         'type': int,
-        'default': 1e5,
+        'default': 1e4,
     },
 }
 
@@ -180,7 +180,7 @@ def split_and_choose(x):
     return random.choice(x.split('CAPTIONBREAK'))
 
 def make_train_loader(image_transform,
-                      shuffle=FLAGS.shuffle, batch_size=batch_size):
+                      shuffle=10000, batch_size=batch_size):
     num_dataset_instances = xm.xrt_world_size() * num_workers
     epoch_size = trainsize // num_dataset_instances
 
