@@ -262,8 +262,12 @@ class ModifiedResNet(nn.Module):
 
 class LayerNorm(nn.LayerNorm):
     """Subclass torch's LayerNorm to handle fp16."""
+
+    def __init__(self, *args, **kwargs):
+        super(LayerNorm, self).__init__(*args, eps=1e-3, **kwargs)
+        # SubClass initialization code
+
     def forward(self, x: torch.Tensor):
-        return x
         orig_type = x.dtype
         ret = super().forward(x.type(torch.float32))
         return ret.type(orig_type)
