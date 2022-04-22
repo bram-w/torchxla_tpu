@@ -288,16 +288,11 @@ def train_imagenet():
             step = raw_step + start_step
             optimizer.zero_grad()
             txts = clip.tokenize(txts_raw, truncate=True).to(xm.xla_device())
-            print(f"Pre-forward", torch.any(torch.isnan(txts)))
-            logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            print(f"Post-forward", torch.any(torch.isnan(logits_per_image)),
-                    torch.any(torch.isnan(logits_per_text)))
             # target = torch.arange(txts.shape[0], device=xm.xla_device())
             target = batch_size * xm.get_ordinal() + torch.arange(batch_size,
                                                                 device=xm.xla_device())
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
-            print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
             xm.optimizer_step(optimizer)
