@@ -96,10 +96,6 @@ MODEL_OPTS = {
         'type': int,
         'default': 100,
     },
-    '--batch_size': {
-        'type': int,
-        'default': 128,
-    },
     '--shuffle': {
         'type': int,
         'default': 1e5,
@@ -109,8 +105,7 @@ MODEL_OPTS = {
         
 FLAGS = args_parse.parse_common_options(
     datadir='/tmp/imagenet',
-    batch_size=None,
-    num_epochs=3906,
+    num_epochs=30,
     momentum=None,
     lr=None,
     target_accuracy=None,
@@ -124,7 +119,7 @@ FLAGS = args_parse.parse_common_options(
 DEFAULT_KWARGS = dict(
     batch_size=128,
     test_set_batch_size=None,
-    num_epochs=3906,
+    num_epochs=30,
     momentum=None,
     lr=None,
     wd=None,
@@ -307,7 +302,7 @@ def train_imagenet():
             # print(target, target.shape)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
-            print("Losses", img_loss, txt_loss)
+            # print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
             xm.optimizer_step(optimizer)
