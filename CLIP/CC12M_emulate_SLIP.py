@@ -97,6 +97,10 @@ MODEL_OPTS = {
         'type': int,
         'default': 100,
     },
+    '--shuffle': {
+        'type': int,
+        'default': 1e5,
+    },
 }
 
         
@@ -174,7 +178,7 @@ def split_and_choose(x):
     return random.choice(x.split('CAPTIONBREAK'))
 
 def make_train_loader(image_transform,
-                      shuffle=100000, batch_size=batch_size):
+                      shuffle=FLAGS.shuffle, batch_size=batch_size):
     num_dataset_instances = xm.xrt_world_size() * num_workers
     epoch_size = trainsize // num_dataset_instances
 
@@ -182,7 +186,7 @@ def make_train_loader(image_transform,
         wds.ResampledShards(FLAGS.wds_traindir),
         # we now have an iterator over all shards
         wds.tarfile_to_samples(),
-        wds.shuffle(100000),
+        wds.shuffle(FLAGS.shuffle),
         wds.decode("pil"),
         # we now have a list of decompressed train samples from each shard in this worker, in sequence
         wds.to_tuple("ppm;jpg;jpeg;png", "txt"),
@@ -226,7 +230,7 @@ def train_imagenet():
 
     train_loader = make_train_loader(preprocess_train,
                                      batch_size=batch_size,
-                                     shuffle=100000)
+                                     shuffle=FLAGS.shuffle)
     writer = None
     if xm.is_master_ordinal():
         writer = test_utils.get_summary_writer(FLAGS.logdir)
@@ -296,6 +300,7 @@ def train_imagenet():
                     logits_per_image.max(), logits_per_image.shape)
             print("train loop fn logits info", logits_per_text.min(),
                     logits_per_text.max(), logits_per_text.shape)
+            print(target, target.shape)
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
             print("Losses", img_loss, txt_loss)
