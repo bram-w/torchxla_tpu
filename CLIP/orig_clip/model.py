@@ -477,9 +477,12 @@ class CLIP(nn.Module):
         # not account for ragged batches for now
         global_image_features = gather_tensor_with_backward(image_features)
         global_text_features = gather_tensor_with_backward(text_features)
-        
+        print(f"Globals", torch.any(torch.isnan( global_image_features)),
+                torch.any(torch.isnan(global_text_features)))
         logits_per_image = logit_scale * image_features @ global_text_features.t()
         logits_per_text = logit_scale * text_features @ global_image_features.t()
+        print(f"Logits", torch.any(torch.isnan(logits_per_image)),
+                torch.any(torch.isnan(logits_per_text)))
 
         # shape = [local_batch_size, global_batch_size]
         return logits_per_image, logits_per_text
