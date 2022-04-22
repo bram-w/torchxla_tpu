@@ -243,7 +243,7 @@ def train_imagenet():
     opt_hparam_dict = model_to_settings[FLAGS.model][1]
     optimizer = optim.AdamW(
             model.parameters(),
-            lr=opt_hparam_dict['lr'],
+            lr=0*opt_hparam_dict['lr'],
             weight_decay=0.5,
             betas=(0.9, opt_hparam_dict['adam_beta2']),
             eps=opt_hparam_dict['adam_eps']
