@@ -7,9 +7,12 @@ import torch.nn.functional as F
 from torch import nn
 # import encoder
 
+
 from torchvision.models import resnet18, resnet34, vgg19, resnet50, resnet101, resnet152
 import torchvision
 from typing import Any, Dict, Union
+
+from distributed import gather_tensor_with_backward, get_rank, get_world_size
 
 
 class ImageEncoder(nn.Module):
@@ -460,7 +463,7 @@ class CLIP(nn.Module):
 
         return x
 
-    def forward(self, image, text):
+    def forward(self, image, text, xla_gather=True):
         image_features = self.encode_image(image)
         text_features = self.encode_text(text)
 
@@ -470,10 +473,15 @@ class CLIP(nn.Module):
 
         # cosine similarity as logits
         logit_scale = self.logit_scale.exp()
-        logits_per_image = logit_scale * image_features @ text_features.t()
-        logits_per_text = logits_per_image.t()
+        
+        # not account for ragged batches for now
+        global_image_features = gather_tensor_with_backward(image_features)
+        global_text_features = gather_tensor_with_backward(text_features)
+        
+        logits_per_image = logit_scale * image_features @ global_text_features.t()
+        logits_per_text = logit_scale * text_features @ global_image_features.t()
 
-        # shape = [global_batch_size, global_batch_size]
+        # shape = [local_batch_size, global_batch_size]
         return logits_per_image, logits_per_text
 
 # NEed to import transformers module
