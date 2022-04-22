@@ -57,7 +57,6 @@ for extra in ('/usr/share/torch-xla-1.8/pytorch/xla/test', '/pytorch/xla/test', 
 from my_lr_scheduler import LinearWarmupCosineAnnealingLR
 import args_parse 
 
-batch_size = 128
 num_workers = 8
 
 
@@ -96,6 +95,10 @@ MODEL_OPTS = {
     '--save_steps': {
         'type': int,
         'default': 100,
+    },
+    '--batch_size': {
+        'type': int,
+        'default': 128,
     },
     '--shuffle': {
         'type': int,
@@ -154,6 +157,7 @@ trainsize = 350 * int(1e6) # our dataset is within 1% of 10 million and we're do
 # Upping by factor of 10 b/c didn't converge and this is possible suspect
 # trainsize = 35 * 10* int(1e7) # 10x from above
 assert FLAGS.save_steps % FLAGS.log_steps == 0 # need to hit below logic
+batch_size = FLAGS.batch_size
 
 def _upload_blob_gcs(gcs_uri, source_file_name, destination_blob_name):
     """Uploads a file to GCS bucket"""
