@@ -288,6 +288,7 @@ def train_imagenet():
         tracker = xm.RateTracker()
         total_samples = 0
         model.train()
+        model.eval()
         for raw_step, (imgs, txts_raw) in enumerate(loader):
             # Below is needed to maintain good CLIP stability and isn't directly in model
             model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
