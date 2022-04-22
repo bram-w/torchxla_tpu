@@ -12,7 +12,7 @@ from torchvision.models import resnet18, resnet34, vgg19, resnet50, resnet101, r
 import torchvision
 from typing import Any, Dict, Union
 
-from distributed import gather_tensor_with_backward, get_rank, get_world_size
+from .distributed import gather_tensor_with_backward
 
 
 class ImageEncoder(nn.Module):
