@@ -43,7 +43,7 @@ slip_vit_b_16_arch_dict = {"embed_dim":512,
 
 slip_vit_b_16_opt_dict = {"lr":5e-4,
                         "adam_beta2":0.98,
-                        "adam_eps":1e-8}
+                        "adam_eps":1e-6}
 
 
 
