@@ -7,6 +7,7 @@ from itertools import chain
 import torch
 from torch import distributed as dist
 
+# reduced is_xla() with true b/c I am tpu
 
 try:
     import torch_xla.core.xla_model as xm
@@ -75,7 +76,7 @@ def gather_tensor_with_backward(tensor, dim=0):
     if world_size < 2:
         return tensor
 
-    if is_xla():
+    if True:
         tensor_list = XLAGatherLayer.apply(tensor, dim)
         tensor_list = tensor_list.flatten(start_dim=dim, end_dim=dim + 1)
     else:
@@ -103,10 +104,6 @@ def broadcast_xla_master_model_param(model):
     xm.rendezvous("broadcast_xla_master_model_param")
 
 
-def is_xla():
-    from config import cfg
-
-    return cfg.device == "xla"
 
 
 def master_print(message):
@@ -123,7 +120,7 @@ def reduce_tensor(t, average=False):
         return t
 
     with torch.no_grad():
-        if is_xla():
+        if True:
             scale = 1.0 / world_size if average else 1.0
             t = xm.all_reduce(xm.REDUCE_SUM, t, scale=scale)
         else:
@@ -134,13 +131,13 @@ def reduce_tensor(t, average=False):
 
 
 def get_world_size():
-    if is_xla():
+    if True:
         return xm.xrt_world_size()
     return dist.get_world_size()
 
 
 def get_rank():
-    if is_xla():
+    if True:
         return xm.get_ordinal()
     return dist.get_rank()
 
@@ -150,7 +147,7 @@ def is_master():
 
 
 def synchronize(message="sync-workers"):
-    if is_xla():
+    if True:
         xm.rendezvous(message)
         return
 
@@ -249,7 +246,7 @@ def setup_logging(cfg, logging_name):
 
 def distributed_init(cfg, device_id):
     cfg.device_id = device_id
-    if is_xla():
+    if True:
         cfg.world_size = xm.xrt_world_size()
         cfg.rank = xm.get_ordinal()
         return
@@ -286,7 +283,7 @@ def save_ckpt(ckpt_path, model, optimizer, lr_scheduler, scaler, meta_data):
     }
     if scaler is not None:
         ckpt["scaler"] = scaler.state_dict()
-    if is_xla():
+    if True:
         xm.save(ckpt, ckpt_path, global_master=True)
     else:
         if is_master():
@@ -298,7 +295,7 @@ def save_ckpt(ckpt_path, model, optimizer, lr_scheduler, scaler, meta_data):
 def load_ckpt(ckpt_path, model, optimizer, lr_scheduler, scaler):
     from config import cfg
 
-    if is_xla():
+    if True:
         ckpt = torch.load(ckpt_path, map_location="cpu")
     else:
         ckpt = torch.load(ckpt_path, map_location=f"cuda:{cfg.device_id}")
