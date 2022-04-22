@@ -297,6 +297,7 @@ def train_imagenet():
                                                                 device=xm.xla_device())
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
+            print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
             xm.optimizer_step(optimizer)
