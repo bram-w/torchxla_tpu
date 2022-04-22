@@ -294,6 +294,7 @@ def train_imagenet():
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             img_loss = F.cross_entropy(logits_per_image, target)
             txt_loss = F.cross_entropy(logits_per_text, target)
+            print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
             xm.optimizer_step(optimizer)
