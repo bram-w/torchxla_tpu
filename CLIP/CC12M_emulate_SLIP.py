@@ -1,3 +1,6 @@
+# LEAK IS PROBABLY FROM WRITING A METRIC WITHOUT ITEM CALL
+# https://github.com/facebookresearch/SLIP/commit/5dc590e6e039d23ef05935fba0c55a0307ada0e7
+
 import torch_xla.test.test_utils as test_utils
 import torch_xla.distributed.xla_multiprocessing as xmp
 import torch_xla.core.xla_model as xm
@@ -104,6 +107,7 @@ MODEL_OPTS = {
 
         
 FLAGS = args_parse.parse_common_options(
+    batch_size=None,
     datadir='/tmp/imagenet',
     num_epochs=30,
     momentum=None,
@@ -240,7 +244,7 @@ def train_imagenet():
     opt_hparam_dict = model_to_settings[FLAGS.model][1]
     optimizer = optim.AdamW(
             model.parameters(),
-            lr=opt_hparam_dict['lr'] * (full_batch_size / 32768),
+            lr=opt_hparam_dict['lr'],
             weight_decay=0.5,
             betas=(0.9, opt_hparam_dict['adam_beta2']),
             eps=opt_hparam_dict['adam_eps']

@@ -41,7 +41,7 @@ slip_vit_b_16_arch_dict = {"embed_dim":512,
                      "transformer_width":512,
                      "transformer_heads":8}
 
-clip_vit_b_16_opt_dict = {"lr":5e-4,
+slip_vit_b_16_opt_dict = {"lr":5e-4,
                         "adam_beta2":0.98,
                         "adam_eps":1e-8}
 
@@ -49,5 +49,5 @@ clip_vit_b_16_opt_dict = {"lr":5e-4,
 
 model_to_settings = { "ResNet50":(rn50_arch_dict, rn50_opt_dict),
                    "ViT-L/14":(vit_l_14_arch_dict, vit_l_14_opt_dict),
-                   "SLIP_ViT-B/16":( slip_vit_b_16_arch_dict, clip_vit_b_16_opt_dict)
+                   "SLIP_ViT-B/16":( slip_vit_b_16_arch_dict, slip_vit_b_16_opt_dict)
                    }
