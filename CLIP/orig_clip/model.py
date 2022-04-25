@@ -269,7 +269,6 @@ class LayerNorm(nn.LayerNorm):
         # SubClass initialization code
 
     def forward(self, x: torch.Tensor):
-        return x
         orig_type = x.dtype
         ret = super().forward(x.type(torch.float32))
         return ret.type(orig_type)
@@ -482,13 +481,13 @@ class CLIP(nn.Module):
         
         # not account for ragged batches for now
         # print(image_features.shape, text_features.shape)
-        global_image_features = gather_tensor_with_backward(image_features)
-        global_text_features = gather_tensor_with_backward(text_features)
+        global_image_features = image_features # gather_tensor_with_backward(image_features)
+        global_text_features = text_features # gather_tensor_with_backward(text_features)
+        logits_per_image = logit_scale * image_features @ global_text_features.t()
+        logits_per_text = logit_scale * text_features @ global_image_features.t()
         # print(global_image_features.shape, global_text_features.shape)
         # print(global_image_features.min(), global_text_features.min())
         # print(global_image_features.max(), global_text_features.max())
-        logits_per_image = logit_scale * image_features @ global_text_features.t()
-        logits_per_text = logit_scale * text_features @ global_image_features.t()
         # print(logits_per_image.shape, logits_per_text.shape)
         # print(logits_per_image.min(), logits_per_text.min())
         # print(logits_per_image.max(), logits_per_text.max())
