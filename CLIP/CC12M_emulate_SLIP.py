@@ -212,7 +212,7 @@ def train_imagenet():
 
     device = xm.xla_device()
     rank=xm.get_ordinal()
-    model = clip_model_lib.CLIP(**model_to_settings[FLAGS.model][0]).to(device)
+    model = clip_model_lib.CLIP(**model_to_settings[FLAGS.model][0]).float().to(device)
     preprocess_train = transforms.Compose([transforms.RandomResizedCrop(224, (0.5, 1)), # 0.5 from SLIP , 0.9 from mlfoundations (transorm.py)
                                          clip._convert_image_to_rgb,
                                          transforms.ToTensor(),
