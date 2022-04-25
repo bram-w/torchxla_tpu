@@ -1,9 +1,6 @@
 # LEAK IS PROBABLY FROM WRITING A METRIC WITHOUT ITEM CALL
 # https://github.com/facebookresearch/SLIP/commit/5dc590e6e039d23ef05935fba0c55a0307ada0e7
 
-import torch.cuda.amp as amp
-
-
 import torch_xla.test.test_utils as test_utils
 import torch_xla.distributed.xla_multiprocessing as xmp
 import torch_xla.core.xla_model as xm
@@ -30,7 +27,7 @@ from google.cloud.storage.bucket import Bucket
 from google.cloud.storage.blob import Blob
 
 from orig_clip import clip
-from orig_clip import model as clip_model_lib
+from orig_clip import timm_model as clip_model_lib
 import random
 
 from arch_settings import model_to_settings
@@ -215,7 +212,8 @@ def train_imagenet():
 
     device = xm.xla_device()
     rank=xm.get_ordinal()
-    model = clip_model_lib.CLIP(**model_to_settings[FLAGS.model][0]).to(device)
+    model = clip_model_lib.CLIP_VITB16().to(device)
+    # model = clip_model_lib.CLIP(**model_to_settings[FLAGS.model][0]).to(device)
     preprocess_train = transforms.Compose([transforms.RandomResizedCrop(224, (0.5, 1)), # 0.5 from SLIP , 0.9 from mlfoundations (transorm.py)
                                          clip._convert_image_to_rgb,
                                          transforms.ToTensor(),
@@ -251,8 +249,7 @@ def train_imagenet():
             betas=(0.9, opt_hparam_dict['adam_beta2']),
             eps=opt_hparam_dict['adam_eps']
             )
-    scaler = amp.GradScaler()
-
+    
     
     lr_scheduler = LinearWarmupCosineAnnealingLR(optimizer,
                                                  num_training_steps_per_epoch,
@@ -297,25 +294,22 @@ def train_imagenet():
             model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
             step = raw_step + start_step
             optimizer.zero_grad()
-            with torch.cuda.amp.autocast(enabled=True):
-                txts = clip.tokenize(txts_raw, truncate=True).to(xm.xla_device())
-                # target = torch.arange(txts.shape[0], device=xm.xla_device())
-                target = batch_size * xm.get_ordinal() + torch.arange(batch_size,
-                                                                    device=xm.xla_device())
-                logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-                # print("train loop fn logits info", logits_per_image.min(),
-                #         logits_per_image.max(), logits_per_image.shape)
-                # print("train loop fn logits info", logits_per_text.min(),
-                #         logits_per_text.max(), logits_per_text.shape)
-                # print(target, target.shape)
-                img_loss = F.cross_entropy(logits_per_image, target)
-                txt_loss = F.cross_entropy(logits_per_text, target)
-                # print("Losses", img_loss, txt_loss)
-                loss = (img_loss + txt_loss ) / 2
-            scaler.scale(loss).backward()
-            xm.reduce_gradients(optimizer)
-            scaler.step(optimizer)
-            scaler.update()
+            txts = clip.tokenize(txts_raw, truncate=True).to(xm.xla_device())
+            # target = torch.arange(txts.shape[0], device=xm.xla_device())
+            target = batch_size * xm.get_ordinal() + torch.arange(batch_size,
+                                                                 device=xm.xla_device())
+            logits_per_image, logits_per_text = model(imgs, txts.squeeze())
+            # print("train loop fn logits info", logits_per_image.min(),
+            #         logits_per_image.max(), logits_per_image.shape)
+            # print("train loop fn logits info", logits_per_text.min(),
+            #         logits_per_text.max(), logits_per_text.shape)
+            # print(target, target.shape)
+            img_loss = F.cross_entropy(logits_per_image, target)
+            txt_loss = F.cross_entropy(logits_per_text, target)
+            # print("Losses", img_loss, txt_loss)
+            loss = (img_loss + txt_loss ) / 2
+            loss.backward()
+            xm.optimizer_step(optimizer)
             tracker.add(batch_size)
             total_samples += imgs.size()[0]
             if lr_scheduler:
