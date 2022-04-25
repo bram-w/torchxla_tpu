@@ -101,7 +101,7 @@ MODEL_OPTS = {
     },
     '--shuffle': {
         'type': int,
-        'default': 1e4,
+        'default': 1e5,
     },
 }
 
