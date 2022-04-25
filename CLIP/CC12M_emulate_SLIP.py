@@ -294,9 +294,9 @@ def train_imagenet():
             step = raw_step + start_step
             optimizer.zero_grad()
             txts = clip.tokenize(txts_raw, truncate=True).to(xm.xla_device())
-            target = torch.arange(txts.shape[0], device=xm.xla_device())
-            # target = batch_size * xm.get_ordinal() + torch.arange(batch_size,
-            #                                                      device=xm.xla_device())
+            # target = torch.arange(txts.shape[0], device=xm.xla_device())
+            target = batch_size * xm.get_ordinal() + torch.arange(batch_size,
+                                                              device=xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
             # print("train loop fn logits info", logits_per_image.min(),
             #         logits_per_image.max(), logits_per_image.shape)
