@@ -304,6 +304,9 @@ def train_imagenet():
                     logits_per_image.max(), logits_per_image.shape)
             print("train loop fn logits info", logits_per_text.min(),
                     logits_per_text.max(), logits_per_text.shape)
+            idx = torch.arange(batch_size)
+            print("Target vals", logits_per_image[idx, target],
+                    logits_per_text[idx, target])
             # print(target, target.shape)
             txt_loss = F.cross_entropy(logits_per_text, target)
             img_loss = F.cross_entropy(logits_per_image, target)
