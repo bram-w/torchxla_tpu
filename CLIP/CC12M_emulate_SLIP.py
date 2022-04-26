@@ -298,8 +298,8 @@ def train_imagenet():
             target = (batch_size * xm.get_ordinal()) + torch.arange(batch_size,
                                                               device=xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            # print(logits_per_image.shape, logits_per_text.shape, batch_size,
-            #         xm.get_ordinal())
+            print(target.min(), target.max(), batch_size,
+                    xm.get_ordinal())
             # print("train loop fn logits info", logits_per_image.min(),
             #         logits_per_image.max(), logits_per_image.shape)
             print("train loop fn logits info", logits_per_text.min(),
