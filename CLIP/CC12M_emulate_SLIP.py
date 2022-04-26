@@ -308,8 +308,8 @@ def train_imagenet():
             print("Target vals", logits_per_image[idx, target],
                     logits_per_text[idx, target])
             # print(target, target.shape)
-            txt_loss = F.cross_entropy(logits_per_text, target)
-            img_loss = F.cross_entropy(logits_per_image, target)
+            txt_loss = F.cross_entropy(logits_per_text - 1e5, target)
+            img_loss = F.cross_entropy(logits_per_image - 1e5, target)
             print("Losses", img_loss, txt_loss)
             loss = (img_loss + txt_loss ) / 2
             loss.backward()
