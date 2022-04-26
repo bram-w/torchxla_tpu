@@ -298,14 +298,14 @@ def train_imagenet():
             target = (batch_size * xm.get_ordinal()) + torch.arange(batch_size,
                                                               device=xm.xla_device())
             logits_per_image, logits_per_text = model(imgs, txts.squeeze())
-            print(logits_per_image.shape, logits_per_text.shape, batch_size,
+            # print(logits_per_image.shape, logits_per_text.shape, batch_size,
                     xm.get_ordinal())
-            print("train loop fn logits info", logits_per_image.min(),
+            # print("train loop fn logits info", logits_per_image.min(),
                     logits_per_image.max(), logits_per_image.shape)
             print("train loop fn logits info", logits_per_text.min(),
                     logits_per_text.max(), logits_per_text.shape)
             idx = torch.arange(batch_size)
-            print("Target vals", logits_per_image[idx, target],
+            # print("Target vals", logits_per_image[idx, target],
                     logits_per_text[idx, target])
             # print(target, target.shape)
             txt_loss = F.cross_entropy(logits_per_text - 1e5, target)
